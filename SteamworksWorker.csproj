@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net6.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Reference Include="Steamworks.NET" />
+    </ItemGroup>
+    
+    <ItemGroup>
+        <None Include="SteamworksLibs/**/*" CopyToOutputDirectory="PreserveNewest" />
+        <None Include="deployLibs.sh" CopyToOutputDirectory="PreserveNewest" />
+        <None Include="steam_appid.txt" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+
+</Project>
