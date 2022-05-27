@@ -3,7 +3,7 @@ using Steamworks;
 
 namespace SteamworksWorker.Modules;
 
-sealed class QueryInstance
+public sealed class QueryInstance
 {
     private EResult _errorState;
     private List<dynamic> _items = new (Constants.k_unEnumeratePublishedFilesMaxResults);
@@ -15,16 +15,20 @@ sealed class QueryInstance
     private string _nextCursor;
     private readonly CallResult<SteamUGCQueryCompleted_t> _queryHook;
     private const EUGCMatchingUGCType QueryResultType = EUGCMatchingUGCType.k_EUGCMatchingUGCType_Items;
-    
-    internal const uint TMLAppID = 1281930;
-    internal static AppId_t TMLAppID_t = new(TMLAppID);
-    
+
     //Fields that can be changed
-    private EUGCQuery _queryType = EUGCQuery.k_EUGCQuery_RankedByTotalUniqueSubscriptions;
-    private uint _playtimeStats = 30; //days [1, 365]
-    private string searchText = String.Empty;
-    
-    internal QueryInstance() => _queryHook = CallResult<SteamUGCQueryCompleted_t>.Create(OnQueryCompleted);
+    private EUGCQuery _queryType;
+    private uint _playtimeStats;
+    private string _searchText;
+
+    public QueryInstance(QueryType queryType = QueryType.MostVoted, uint playtimeStats = 30, string searchText = null)
+    {
+        _queryHook = CallResult<SteamUGCQueryCompleted_t>.Create(OnQueryCompleted);
+
+        _queryType = QueryHelper.queryTypeToUGCIndex[queryType];
+        _playtimeStats = Math.Clamp(playtimeStats, 1, 365);
+        _searchText = searchText ?? String.Empty;
+    } 
     
     private void OnQueryCompleted(SteamUGCQueryCompleted_t pCallback, bool bIOFailure)
     {
@@ -37,31 +41,34 @@ sealed class QueryInstance
             _totalItemsMatchingQuery = pCallback.m_unTotalMatchingResults;
     }
     
-    //TODO: SetFilter, SetPlaytime, SetSearchText..
-    
-    internal void ReleaseQuery() => SteamUGC.ReleaseQueryUGCRequest(_ugcQueryHandle);
+    private void ReleaseQuery() => SteamUGC.ReleaseQueryUGCRequest(_ugcQueryHandle);
 
-    internal void QueryAllPages()
+    public void QueryAllPages()
     {
         do
         {
             QueryNextPage();
-        } while (_totalItemsMatchingQuery != _totalItemsQueried);
+
+            if (!QueryHelper.HandleError(_errorState))
+                return;
+        }
+        while (_totalItemsMatchingQuery != _totalItemsQueried);
     }
     
-    internal void QueryNextPage()
+    public void QueryNextPage()
     {
         if (_totalItemsMatchingQuery != 0 && _totalItemsMatchingQuery == _totalItemsQueried) return;
 
         _ugcQueryResultState = EResult.k_EResultNone;
         UGCQueryHandle_t qHandle =
-            SteamUGC.CreateQueryAllUGCRequest(_queryType, QueryResultType, TMLAppID_t, TMLAppID_t, _nextCursor);
+            SteamUGC.CreateQueryAllUGCRequest(_queryType, QueryResultType, 
+                QueryHelper.TMLAppID_t, QueryHelper.TMLAppID_t, _nextCursor);
 
         SteamUGC.SetLanguage(qHandle, QueryHelper.GetCurrentSteamLangKey());
         SteamUGC.SetReturnKeyValueTags(qHandle, true); //Workshop tags
         SteamUGC.SetAllowCachedResponse(qHandle, 0);
         SteamUGC.SetReturnChildren(qHandle, true);
-        SteamUGC.SetSearchText(qHandle, searchText);
+        SteamUGC.SetSearchText(qHandle, _searchText);
         
         //TODO: Add other api calls that we'd like the qHandle to retrieve
         
@@ -102,6 +109,8 @@ sealed class QueryInstance
             SteamUGC.GetQueryUGCChildren(qHandle, i, itemDependencies, (uint) itemDependencies.Length);
 
             //TODO: Retrieve the data we want from the workshop item
+            
+            uint[] votesUpAndDown = new[] {pDetails.m_unVotesUp, pDetails.m_unVotesDown};
         }
 
         _totalItemsQueried += _ugcQueryResultNumItems;
