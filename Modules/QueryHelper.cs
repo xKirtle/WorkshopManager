@@ -17,6 +17,11 @@ internal static class QueryHelper
         return supportedLangagues.Contains(lang) ? lang : "english";
     }
     
+    internal static string[] MetadataKeys = new string[7]
+    {
+        "name", "author", "modside", "homepage", "modloaderversion", "version", "modreferences"
+    };
+    
     internal static bool HandleError(EResult eResult)
     {
         if (eResult == EResult.k_EResultOK || eResult == EResult.k_EResultNone) return true;

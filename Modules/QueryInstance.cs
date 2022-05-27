@@ -1,3 +1,4 @@
+using System.Collections.Specialized;
 using System.Diagnostics;
 using Steamworks;
 
@@ -6,7 +7,7 @@ namespace SteamworksWorker.Modules;
 public sealed class QueryInstance
 {
     private EResult _errorState;
-    private List<dynamic> _items = new (Constants.k_unEnumeratePublishedFilesMaxResults);
+    private List<WorkshopItem> _items = new (Constants.k_unEnumeratePublishedFilesMaxResults);
     private uint _totalItemsMatchingQuery;
     private uint _totalItemsQueried;
     private UGCQueryHandle_t _ugcQueryHandle;
@@ -104,13 +105,74 @@ public sealed class QueryInstance
                 ERemoteStoragePublishedFileVisibility.k_ERemoteStoragePublishedFileVisibilityPublic
                 || pDetails.m_eResult != EResult.k_EResultOK)
                 continue;
-
-            PublishedFileId_t[] itemDependencies = new PublishedFileId_t[32]; //No item should have more than 32 dependencies? lol
-            SteamUGC.GetQueryUGCChildren(qHandle, i, itemDependencies, (uint) itemDependencies.Length);
-
-            //TODO: Retrieve the data we want from the workshop item
             
+
+            //Retrieve the data we want from the workshop item
+            ulong workshopFileId = pDetails.m_nPublishedFileId.m_PublishedFileId;
+            string displayName = pDetails.m_rgchTitle;
+            string[] authors;
+            ulong[] workshopDependencies;
             uint[] votesUpAndDown = new[] {pDetails.m_unVotesUp, pDetails.m_unVotesDown};
+            DateTime lastUpdate = DateTimeOffset.FromUnixTimeSeconds(pDetails.m_rtimeUpdated).UtcDateTime;
+            string shortDescription = pDetails.m_rgchDescription;
+            string modIconURL;
+            string[] tags = pDetails.m_rgchTags.Split(",");
+            ulong subscriptions;
+            ulong favorites;
+            bool isSubscribed = (SteamUGC.GetItemState(pDetails.m_nPublishedFileId) & (ulong)EItemState.k_EItemStateSubscribed) == 1;
+            string modloaderVersion;
+            
+            PublishedFileId_t[] itemDependencies = new PublishedFileId_t[32]; //No item should have more than 32 dependencies? lol
+            if (!SteamUGC.GetQueryUGCChildren(qHandle, i, itemDependencies, (uint) itemDependencies.Length))
+                Debug.Print($"Error: Could not retrieve mod dependencies for Mod {displayName}");
+            workshopDependencies = Array.ConvertAll(itemDependencies, input => input.m_PublishedFileId);
+
+            if (!SteamUGC.GetQueryUGCPreviewURL(_ugcQueryHandle, i, out modIconURL, 1000))
+                Debug.Print($"Error: Could not retrieve icon preview for Mod {displayName}");
+            
+            if (!SteamUGC.GetQueryUGCStatistic(qHandle, i,
+                    EItemStatistic.k_EItemStatistic_NumSubscriptions, out subscriptions))
+                Debug.Print($"Error: Could not retrieve number of subscriptions for Mod {displayName}");
+            
+            if (!SteamUGC.GetQueryUGCStatistic(qHandle, i,
+                    EItemStatistic.k_EItemStatistic_NumFavorites, out favorites))
+                Debug.Print($"Error: Could not retrieve number of favorites for Mod {displayName}");
+            
+            //Metadata stuff
+            NameValueCollection metadata = new();
+            uint tagsKeyCount = SteamUGC.GetQueryUGCNumKeyValueTags(_ugcQueryHandle, i);
+            
+            //if (keyCount < MetadataKeys.Length) -> error?
+            for (uint j = 0; j < tagsKeyCount; j++)
+            {
+                string key, value;
+                SteamUGC.GetQueryUGCKeyValueTag(qHandle, i, j, 
+                    out key, Constants.k_cubUFSTagTypeMax, out value, Constants.k_cubUFSTagValueMax);
+
+                metadata[key] = value;
+            }
+            //Should I check if these keys are the correct ones? They might end up changing in tModLoader..
+
+            authors = metadata["author"].Split(", ");
+            modloaderVersion = metadata["modloaderversion"];
+            
+            ModSide modSide = ModSide.Both;
+            switch (metadata["modside"])
+            {
+                case "Client":
+                    modSide = ModSide.Client;
+                    break;
+                case "Server":
+                    modSide = ModSide.Server;
+                    break;
+                case "NoSync":
+                    modSide = ModSide.NoSync;
+                    break;
+            }
+
+            _items.Add(new WorkshopItem(workshopFileId, displayName, authors, workshopDependencies, 
+                votesUpAndDown, lastUpdate, shortDescription, modIconURL, tags, subscriptions, 
+                favorites, isSubscribed, modloaderVersion, modSide));
         }
 
         _totalItemsQueried += _ugcQueryResultNumItems;
