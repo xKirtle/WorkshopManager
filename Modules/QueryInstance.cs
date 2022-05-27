@@ -20,8 +20,10 @@ sealed class QueryInstance
     internal static AppId_t TMLAppID_t = new(TMLAppID);
     
     //Fields that can be changed
-    private EUGCQuery _queryType;
+    private EUGCQuery _queryType = EUGCQuery.k_EUGCQuery_RankedByTotalUniqueSubscriptions;
     private uint _playtimeStats = 30; //days [1, 365]
+    private string searchText = String.Empty;
+    
     internal QueryInstance() => _queryHook = CallResult<SteamUGCQueryCompleted_t>.Create(OnQueryCompleted);
     
     private void OnQueryCompleted(SteamUGCQueryCompleted_t pCallback, bool bIOFailure)
@@ -35,11 +37,21 @@ sealed class QueryInstance
             _totalItemsMatchingQuery = pCallback.m_unTotalMatchingResults;
     }
     
+    //TODO: SetFilter, SetPlaytime, SetSearchText..
+    
     internal void ReleaseQuery() => SteamUGC.ReleaseQueryUGCRequest(_ugcQueryHandle);
 
+    internal void QueryAllPages()
+    {
+        do
+        {
+            QueryNextPage();
+        } while (_totalItemsMatchingQuery != _totalItemsQueried);
+    }
+    
     internal void QueryNextPage()
     {
-        if (_totalItemsMatchingQuery != 0 && _totalItemsMatchingQuery <= _totalItemsQueried) return;
+        if (_totalItemsMatchingQuery != 0 && _totalItemsMatchingQuery == _totalItemsQueried) return;
 
         _ugcQueryResultState = EResult.k_EResultNone;
         UGCQueryHandle_t qHandle =
@@ -48,6 +60,8 @@ sealed class QueryInstance
         SteamUGC.SetLanguage(qHandle, QueryHelper.GetCurrentSteamLangKey());
         SteamUGC.SetReturnKeyValueTags(qHandle, true); //Workshop tags
         SteamUGC.SetAllowCachedResponse(qHandle, 0);
+        SteamUGC.SetReturnChildren(qHandle, true);
+        SteamUGC.SetSearchText(qHandle, searchText);
         
         //TODO: Add other api calls that we'd like the qHandle to retrieve
         
@@ -83,10 +97,14 @@ sealed class QueryInstance
                 ERemoteStoragePublishedFileVisibility.k_ERemoteStoragePublishedFileVisibilityPublic
                 || pDetails.m_eResult != EResult.k_EResultOK)
                 continue;
-            
+
+            PublishedFileId_t[] itemDependencies = new PublishedFileId_t[32]; //No item should have more than 32 dependencies? lol
+            SteamUGC.GetQueryUGCChildren(qHandle, i, itemDependencies, (uint) itemDependencies.Length);
+
             //TODO: Retrieve the data we want from the workshop item
         }
-        
+
+        _totalItemsQueried += _ugcQueryResultNumItems;
         ReleaseQuery();
     }
 }
