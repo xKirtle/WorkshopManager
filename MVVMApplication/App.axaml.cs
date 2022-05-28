@@ -1,8 +1,10 @@
+using System;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using MVVMApplication.ViewModels;
 using MVVMApplication.Views;
+using SteamworksWorker;
 
 namespace MVVMApplication
 {
@@ -17,9 +19,17 @@ namespace MVVMApplication
         {
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
-                desktop.MainWindow = new MainWindow
+                Worker.InitializeSteamworks();
+
+                MainMenu mainMenu = new();
+                MainMenuViewModel mainMenuViewModel = new();
+                mainMenu.DataContext = mainMenuViewModel;
+                desktop.MainWindow = mainMenu;
+
+                AppDomain.CurrentDomain.ProcessExit += (sender, eventArgs) =>
                 {
-                    DataContext = new MainWindowViewModel(),
+                    if (Worker.IsInitialized)
+                        mainMenuViewModel.QueryInstance?.ReleaseQuery();
                 };
             }
 
