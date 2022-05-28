@@ -3,9 +3,10 @@
         xmlns:vm="using:MVVMApplication.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-        Width="750" Height="400"
-        MinWidth="750" MinHeight="400" MaxWidth="750" MaxHeight="400"
+        xmlns:swWorker="clr-namespace:SteamworksWorker;assembly=SteamworksWorker"
+        mc:Ignorable="d" d:DesignWidth="750" d:DesignHeight="397"
+        Width="750" Height="397"
+        MinWidth="750" MinHeight="397" MaxWidth="750" MaxHeight="397"
         x:Class="MVVMApplication.Views.MainMenu"
         Icon="/Assets/avalonia-logo.ico"
         Title="MVVMApplication">
@@ -13,9 +14,154 @@
     <Design.DataContext>
         <vm:MainMenuViewModel/>
     </Design.DataContext>
-
-    <ListBox Name="WorkshopItemsListBox">
+    
+    <Window.Resources>
+        <Color x:Key="Primary">#429E97</Color>
+        <Color x:Key="PrimaryHighlight">#48ADA4</Color>
+        <Color x:Key="PrimarySelected">#3C9089</Color>
+        <Color x:Key="PrimaryDarker">#245652</Color>
+        <Color x:Key="PrimaryEvenDarker">#1E4844</Color>
+        <Color x:Key="Secondary">#303036</Color>
+        <Color x:Key="SecondaryHighlight">#3A3A41</Color>
+        <Color x:Key="SecondarySelected">#26262B</Color>
+        <Color x:Key="SecondaryDarker">#1D1D20</Color>
+    </Window.Resources>
+    
+    <Window.Styles>
+        <!-- Non specific styles -->
+        <Style Selector="Button">
+            <Setter Property="Background" Value="{StaticResource PrimaryDarker}"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Padding" Value="5 0"/>
+        </Style>
         
-    </ListBox>
+        <Style Selector="Button:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource PrimaryEvenDarker}"/>
+        </Style>
+        
+        <!-- ListBoxItems of filters -->
+        <Style Selector="ListBox#FiltersListBox > ListBoxItem">
+            <Setter Property="Background" Value="{StaticResource Primary}"/>
+        </Style>
+        
+        <Style Selector="ListBox#FiltersListBox > ListBoxItem:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource PrimaryHighlight}"/>
+        </Style>
+        
+        <Style Selector="ListBox#FiltersListBox > ListBoxItem:selected /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource PrimarySelected}"/>
+        </Style>
+        
+        <!-- ListBoxItems of workshopItems -->
+        <Style Selector="ListBox#WorkshopItemsListBox > ListBoxItem">
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Margin" Value="2 0 6 2"/>
+        </Style>
+        
+        <Style Selector="ListBox#WorkshopItemsListBox > ListBoxItem">
+            <Setter Property="Background" Value="{StaticResource Secondary}"/>
+        </Style>
+        
+        <Style Selector="ListBox#WorkshopItemsListBox > ListBoxItem:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource SecondaryHighlight}"/>
+        </Style>
+        
+        <Style Selector="ListBox#WorkshopItemsListBox > ListBoxItem:selected /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource SecondarySelected}"/>
+        </Style>
+        
+        <Style Selector="ListBox#WorkshopItemsListBox > TextBlock">
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+    </Window.Styles>
+    
+    <Grid Name="Grid">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="50"/> 
+            <RowDefinition Height="*"/> 
+        </Grid.RowDefinitions>
+                
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        
+        <!-- Top Panel Location -->
+        <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Background="{StaticResource PrimaryDarker}">
+
+        </Grid>
+        
+        <!-- Left Panel Location -->
+        <Grid Grid.Row="1" Background="{StaticResource SecondaryDarker}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="40"/>
+            </Grid.ColumnDefinitions>
+            
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="20"/>
+            </Grid.RowDefinitions>
+            
+            <ListBox Grid.Column="0" Grid.ColumnSpan="2" Name="FiltersListBox" Background="Transparent" Items="{Binding FilterItems}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate DataType="TextBlock">
+                        <TextBlock Text="{Binding Text}"/>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+                
+            </ListBox>
+            
+            <Button Grid.Row="1" Grid.ColumnSpan="2" Width="200" Height="36" 
+                    Content="Settings" Margin="0 0 0 10" HorizontalContentAlignment="Left" 
+                    HorizontalAlignment="Center" VerticalContentAlignment="Center" FontSize="16" 
+                    Padding="15 0 0 0"/>
+        </Grid>
+        
+        <!-- Right Panel Location -->
+        <Grid Grid.Row="1" Grid.Column="1" Background="{StaticResource SecondaryDarker}">
+            <ListBox Name="WorkshopItemsListBox" Background="Transparent" Items="{Binding ResultItems}" Margin="0 2 0 0">
+                <ListBox.ItemTemplate>
+                    <DataTemplate DataType="{x:Type swWorker:WorkshopItem}">
+                        <Grid Background="Transparent" Height="92">
+                            <!-- Horizontal -->
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="20"/>    <!-- Title --> 
+                                <RowDefinition Height="20"/>    <!-- Author, Tags --> 
+                                <RowDefinition Height="32"/>    <!-- Subs, Favs --> 
+                            </Grid.RowDefinitions>
+                            <!-- Vertical -->
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="92"/>  <!-- Icon -->
+                                <ColumnDefinition Width="*"/>   <!-- Rest -->
+                            </Grid.ColumnDefinitions>
+                            
+                            <Image Grid.Row="0" Grid.RowSpan="3" Grid.Column="0" 
+                                   Width="80" Height="80" Source="{Binding BitmapIcon}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Margin="0 10 0 0"/>
+                            
+                            <TextBlock Text="{Binding DisplayName}" Grid.Row="0" Grid.Column="1" 
+                                       Grid.ColumnSpan="2" Margin="5 6 0 0"/>
+                            
+                            <TextBlock  Grid.Row="0" Grid.Column="1" 
+                                        Background="Gray" Margin="-6 26 0 0" Height="2"/>
+                            
+                            <DockPanel Grid.Row="1" Grid.Column="1" Margin="5 4 0 0">
+                                <Button Content="{Binding Authors, StringFormat=By {0}}" 
+                                        FontSize="12" Focusable="False" Height="20"/>
+                                
+                                <!-- <TextBlock Text="{Binding Tags, StringFormat=Tags: {0}}" FontSize="12" Margin="10 0 0 0"/> -->
+                            </DockPanel>
+                            
+                            <!-- <Image Margin="100 50 0 0" Width="30" Height="30" Stretch="Fill"  -->
+                            <!--        Source="../Assets/user-solid.png" HorizontalAlignment="Left" VerticalAlignment="Center"/> -->
+                        </Grid>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Grid>
+    </Grid>
 
 </Window>

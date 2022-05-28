@@ -10,10 +10,7 @@ namespace MVVMApplication
 {
     public partial class App : Application
     {
-        public override void Initialize()
-        {
-            AvaloniaXamlLoader.Load(this);
-        }
+        public override void Initialize() => AvaloniaXamlLoader.Load(this);
 
         public override void OnFrameworkInitializationCompleted()
         {
@@ -21,7 +18,7 @@ namespace MVVMApplication
             {
                 Worker.InitializeSteamworks();
 
-                MainMenu mainMenu = new();
+                Views.MainMenu mainMenu = new();
                 MainMenuViewModel mainMenuViewModel = new();
                 mainMenu.DataContext = mainMenuViewModel;
                 desktop.MainWindow = mainMenu;

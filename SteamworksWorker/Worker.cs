@@ -26,7 +26,7 @@ public static class Worker
                 IsInitialized = true;
             else
             {
-                Debug.Print("Could not initialize the Steamworks API!");
+                Console.WriteLine("Could not initialize the Steamworks API!");
                 throw new Exception("Could not initialize the Steamworks API!");
             }
         }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
@@ -45,7 +46,7 @@ namespace MVVMApplication.Views
                             //Check if viewModel == null? Initialized in App code behind..
                             if (!viewModel.IsAddingItems)
                             {
-                                Debug.Print($"Requesting Items! Current: {viewModel?.ResultItems.Count}");
+                                Console.WriteLine($"Requesting Items! Current: {viewModel?.ResultItems.Count}");
                                 viewModel.AsyncAddItems();
                             }
                         }

@@ -38,7 +38,7 @@ internal static class QueryHelper
                 break;
         }
 
-        Debug.Print(error);
+        Console.WriteLine(error);
         return false;
     }
 

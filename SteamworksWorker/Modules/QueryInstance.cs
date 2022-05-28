@@ -94,7 +94,7 @@ public sealed class QueryInstance
         if (_ugcQueryResultState != EResult.k_EResultOK)
         {
             _errorState = _ugcQueryResultState;
-            Debug.Print("Error: No connection to the workshop?");
+            Console.WriteLine("Error: No connection to the workshop?");
             ReleaseQuery();
             return;
         }
@@ -115,13 +115,13 @@ public sealed class QueryInstance
             //Retrieve the data we want from the workshop item
             ulong workshopFileId = pDetails.m_nPublishedFileId.m_PublishedFileId;
             string displayName = pDetails.m_rgchTitle;
-            string[] authors;
+            string authors;
             ulong[] workshopDependencies;
             uint[] votesUpAndDown = new[] {pDetails.m_unVotesUp, pDetails.m_unVotesDown};
             DateTime lastUpdate = DateTimeOffset.FromUnixTimeSeconds(pDetails.m_rtimeUpdated).UtcDateTime;
             string shortDescription = pDetails.m_rgchDescription;
             string modIconURL;
-            string[] tags = pDetails.m_rgchTags.Split(",");
+            string tags = pDetails.m_rgchTags;
             ulong subscriptions;
             ulong favorites;
             bool isSubscribed = (SteamUGC.GetItemState(pDetails.m_nPublishedFileId) & (ulong)EItemState.k_EItemStateSubscribed) == 1;
@@ -129,19 +129,19 @@ public sealed class QueryInstance
             
             PublishedFileId_t[] itemDependencies = new PublishedFileId_t[32]; //No item should have more than 32 dependencies? lol
             if (!SteamUGC.GetQueryUGCChildren(qHandle, i, itemDependencies, (uint) itemDependencies.Length))
-                Debug.Print($"Error: Could not retrieve mod dependencies for Mod {displayName}");
+                Console.WriteLine($"Error: Could not retrieve mod dependencies for Mod {displayName}");
             workshopDependencies = Array.ConvertAll(itemDependencies, input => input.m_PublishedFileId);
 
             if (!SteamUGC.GetQueryUGCPreviewURL(_ugcQueryHandle, i, out modIconURL, 1000))
-                Debug.Print($"Error: Could not retrieve icon preview for Mod {displayName}");
+                Console.WriteLine($"Error: Could not retrieve icon preview for Mod {displayName}");
             
             if (!SteamUGC.GetQueryUGCStatistic(qHandle, i,
                     EItemStatistic.k_EItemStatistic_NumSubscriptions, out subscriptions))
-                Debug.Print($"Error: Could not retrieve number of subscriptions for Mod {displayName}");
+                Console.WriteLine($"Error: Could not retrieve number of subscriptions for Mod {displayName}");
             
             if (!SteamUGC.GetQueryUGCStatistic(qHandle, i,
                     EItemStatistic.k_EItemStatistic_NumFavorites, out favorites))
-                Debug.Print($"Error: Could not retrieve number of favorites for Mod {displayName}");
+                Console.WriteLine($"Error: Could not retrieve number of favorites for Mod {displayName}");
             
             //Metadata stuff
             NameValueCollection metadata = new();
@@ -158,7 +158,7 @@ public sealed class QueryInstance
             }
             //Should I check if these keys are the correct ones? They might end up changing in tModLoader..
 
-            authors = metadata["author"].Split(", ");
+            authors = metadata["author"];
             modloaderVersion = metadata["modloaderversion"];
             
             ModSide modSide = ModSide.Both;
