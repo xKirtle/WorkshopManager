@@ -47,7 +47,7 @@ public sealed class QueryInstance
 
     public List<WorkshopItem> RetrieveItemsList() => _items;
     
-    private void ReleaseQuery() => SteamUGC.ReleaseQueryUGCRequest(_ugcQueryHandle);
+    public void ReleaseQuery() => SteamUGC.ReleaseQueryUGCRequest(_ugcQueryHandle);
 
     public void QueryAllPages()
     {

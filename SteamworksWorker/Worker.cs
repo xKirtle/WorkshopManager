@@ -4,19 +4,9 @@ using SteamworksWorker.Modules;
 
 namespace SteamworksWorker;
 
-public class Worker
+public static class Worker
 {
-    private static bool _isInitialized;
-    private static void Main(string[] args)
-    {
-        InitializeSteamworks();
-
-        // QueryInstance instance = new(onItemHandled: item => {Console.WriteLine(item.DisplayName);});
-        QueryInstance instance = new();
-        instance.QueryNextPage();
-        // var list = instance.RetrieveItemsList();
-        // list.ForEach(x => Console.WriteLine(x.DisplayName));
-    }
+    public static bool IsInitialized { get; private set; }
 
     public static void InitializeSteamworks()
     {
@@ -33,7 +23,7 @@ public class Worker
         try
         {
             if (SteamAPI.Init())
-                _isInitialized = true;
+                IsInitialized = true;
             else
             {
                 Debug.Print("Could not initialize the Steamworks API!");
@@ -48,7 +38,7 @@ public class Worker
 
     public static void Exit()
     {
-        if (_isInitialized)
+        if (IsInitialized)
             SteamAPI.Shutdown();
     }
 }
