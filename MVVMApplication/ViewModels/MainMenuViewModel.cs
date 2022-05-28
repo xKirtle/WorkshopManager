@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
@@ -20,12 +21,18 @@ namespace MVVMApplication.ViewModels
     {
         public ObservableCollection<FilterItem> FilterItems { get; }
         public ObservableCollection<WorkshopItem> ResultItems { get; }
-        public bool IsAddingItems { get; set; } = false;
+        public bool IsAddingItems { get; private set; } = false;
         public QueryInstance QueryInstance;
+        
+        private CancellationTokenSource _cancellationTokenSource;
+        private CancellationToken _cancellationToken;
         
         public MainMenuViewModel()
         {
-            QueryInstance = new(onItemHandled: AddItemToResultItems);
+            _cancellationTokenSource = new();
+            _cancellationToken = _cancellationTokenSource.Token;
+            
+            QueryInstance = new(_cancellationToken, onItemHandled: AddItemToResultItems);
             ResultItems = new();
             FilterItems = new();
             AddFilterItems();
@@ -35,26 +42,30 @@ namespace MVVMApplication.ViewModels
         {
             //Necessary lock mechanism for if the user is scrolling too fast
             IsAddingItems = true;
-            Task task = Task.Run(() =>
+            await Task.Run(() =>
             {
                 QueryInstance.QueryNextPage();
                 IsAddingItems = false;
-                Console.WriteLine($"New Items Count: {ResultItems.Count}");
             });
         }
 
         public void SetQueryFilter(QueryType type)
         {
+            //Sending a cancellation request to any tasks that might be running
+            //Necessary for if the user swaps between filters too fast and some
+            //tasks, like downloading the mods icon might still be in progress
+            _cancellationTokenSource.Cancel();
+            _cancellationTokenSource.Dispose();
+            _cancellationTokenSource = new();
+            _cancellationToken = _cancellationTokenSource.Token;
+
             ResultItems.Clear();
-            QueryInstance = new QueryInstance(onItemHandled: AddItemToResultItems, queryType: type);
-            // AsyncAddItems();
+            QueryInstance = new QueryInstance(_cancellationToken, onItemHandled: AddItemToResultItems, queryType: type);
+            AsyncAddItems();
         }
 
         private void AddItemToResultItems(WorkshopItem item)
         {
-            //Bitmap might not have been downloaded yet! Need to wait for it!
-            while (item.BitmapIcon is not Stream);
-            
             ConvertStreamToBitmap(item);
             ResultItems.Add(item);
         }

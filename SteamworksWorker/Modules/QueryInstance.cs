@@ -16,18 +16,22 @@ public sealed class QueryInstance
     private string _nextCursor;
     private readonly CallResult<SteamUGCQueryCompleted_t> _queryHook;
     private const EUGCMatchingUGCType QueryResultType = EUGCMatchingUGCType.k_EUGCMatchingUGCType_Items;
+    private CancellationToken _cancellationToken;
 
     //Fields that can be changed
     private EUGCQuery _queryType;
     private uint _playtimeStats;
     private string _searchText;
     private Action<WorkshopItem> _onItemHandled;
+    
+    public bool IsQueryActive { get; private set; }
 
-    public QueryInstance(QueryType queryType = QueryType.MostVoted, uint playtimeStats = 30, 
+    public QueryInstance(CancellationToken cancellationToken, QueryType queryType = QueryType.MostVoted, uint playtimeStats = 30, 
         string searchText = null, Action<WorkshopItem> onItemHandled = default)
     {
         _queryHook = CallResult<SteamUGCQueryCompleted_t>.Create(OnQueryCompleted);
 
+        _cancellationToken = cancellationToken;
         _queryType = QueryHelper.queryTypeToUGCIndex[queryType];
         _playtimeStats = Math.Clamp(playtimeStats, 1, 365);
         _searchText = searchText ?? String.Empty;
@@ -46,8 +50,12 @@ public sealed class QueryInstance
     }
 
     public List<WorkshopItem> RetrieveItemsList() => _items;
-    
-    public void ReleaseQuery() => SteamUGC.ReleaseQueryUGCRequest(_ugcQueryHandle);
+
+    public void ReleaseQuery()
+    {
+        SteamUGC.ReleaseQueryUGCRequest(_ugcQueryHandle);
+        IsQueryActive = false;
+    }
 
     public void QueryAllPages()
     {
@@ -64,7 +72,8 @@ public sealed class QueryInstance
     public void QueryNextPage()
     {
         if (_totalItemsMatchingQuery != 0 && _totalItemsMatchingQuery == _totalItemsQueried) return;
-
+        IsQueryActive = true;
+        
         _ugcQueryResultState = EResult.k_EResultNone;
         UGCQueryHandle_t qHandle =
             SteamUGC.CreateQueryAllUGCRequest(_queryType, QueryResultType, 
@@ -129,20 +138,33 @@ public sealed class QueryInstance
             
             PublishedFileId_t[] itemDependencies = new PublishedFileId_t[32]; //No item should have more than 32 dependencies? lol
             if (!SteamUGC.GetQueryUGCChildren(qHandle, i, itemDependencies, (uint) itemDependencies.Length))
+            {
                 Console.WriteLine($"Error: Could not retrieve mod dependencies for Mod {displayName}");
+                continue;
+            }
+
             workshopDependencies = Array.ConvertAll(itemDependencies, input => input.m_PublishedFileId);
 
             if (!SteamUGC.GetQueryUGCPreviewURL(_ugcQueryHandle, i, out modIconURL, 1000))
+            {
                 Console.WriteLine($"Error: Could not retrieve icon preview for Mod {displayName}");
-            
+                continue;
+            }
+
             if (!SteamUGC.GetQueryUGCStatistic(qHandle, i,
                     EItemStatistic.k_EItemStatistic_NumSubscriptions, out subscriptions))
+            {
                 Console.WriteLine($"Error: Could not retrieve number of subscriptions for Mod {displayName}");
-            
+                continue;
+            }
+
             if (!SteamUGC.GetQueryUGCStatistic(qHandle, i,
                     EItemStatistic.k_EItemStatistic_NumFavorites, out favorites))
+            {
                 Console.WriteLine($"Error: Could not retrieve number of favorites for Mod {displayName}");
-            
+                continue;
+            }
+
             //Metadata stuff
             NameValueCollection metadata = new();
             uint tagsKeyCount = SteamUGC.GetQueryUGCNumKeyValueTags(_ugcQueryHandle, i);
@@ -175,12 +197,17 @@ public sealed class QueryInstance
                     break;
             }
 
+            if (_cancellationToken.IsCancellationRequested)
+            {
+                Console.WriteLine("Cancellation Requested! QueryInstance");
+                ReleaseQuery();
+                return;
+            }
+            
             WorkshopItem item = new WorkshopItem(workshopFileId, displayName, authors, workshopDependencies,
                 votesUpAndDown, lastUpdate, shortDescription, modIconURL, tags, subscriptions,
-                favorites, isSubscribed, modloaderVersion, modSide);
-            _items.Add(item);
-            
-            _onItemHandled?.Invoke(item);
+                favorites, isSubscribed, modloaderVersion, modSide, _cancellationToken, _onItemHandled);
+            _items.Add(item); //Not even using this anymore?
         }
 
         _totalItemsQueried += _ugcQueryResultNumItems;

@@ -46,10 +46,7 @@ namespace MVVMApplication.Views
                             var viewModel = DataContext as MainMenuViewModel; 
                             //Check if viewModel == null? Initialized in App code behind..
                             if (!viewModel.IsAddingItems)
-                            {
-                                Console.WriteLine($"Requesting Items! Current: {viewModel?.ResultItems.Count}");
                                 viewModel.AsyncAddItems();
-                            }
                         }
                     }).DisposeWith(_disposables);
                 }).DisposeWith(_disposables);

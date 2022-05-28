@@ -11,6 +11,7 @@ public class WorkshopItem
     public uint[] VotesUpAndDown { get; private set; }
     public DateTime LastUpdate { get; private set; }
     public string ShortDescription { get; private set; }
+    public string IconUri { get; set; }
     public dynamic BitmapIcon { get; set; }
     public string Tags { get; private set; }
     public ulong Subscriptions { get; private set; }
@@ -18,10 +19,13 @@ public class WorkshopItem
     public bool IsSubscribed { get; private set; }
     public string ModLoaderVersion { get; private set; }
     public ModSide ModSide { get; private set; }
+    private CancellationToken _cancellationToken;
+    private Action<WorkshopItem> _afterIconDownload;
 
     public WorkshopItem(ulong workshopFileId, string displayName, string authors, ulong[] workshopDependencies, 
-        uint[] votesUpAndDown, DateTime lastUpdate, string shortDescription, dynamic bitmapIcon, string tags, 
-        ulong subscriptions, ulong favorites, bool isSubscribed, string modLoaderVersion, ModSide modSide)
+        uint[] votesUpAndDown, DateTime lastUpdate, string shortDescription, string iconUri, string tags, 
+        ulong subscriptions, ulong favorites, bool isSubscribed, string modLoaderVersion, ModSide modSide, 
+        CancellationToken cancellationToken, Action<WorkshopItem> afterIconDownload)
     {
         WorkshopFileID = workshopFileId;
         DisplayName = displayName;
@@ -30,13 +34,15 @@ public class WorkshopItem
         VotesUpAndDown = votesUpAndDown;
         LastUpdate = lastUpdate;
         ShortDescription = shortDescription;
-        BitmapIcon = bitmapIcon;
+        IconUri = iconUri;
         Tags = tags;
         Subscriptions = subscriptions;
         Favorites = favorites;
         IsSubscribed = isSubscribed;
         ModLoaderVersion = modLoaderVersion;
         ModSide = modSide;
+        _cancellationToken = cancellationToken;
+        _afterIconDownload = afterIconDownload;
         
         //So we can later convert it into bitmap and render it
         DownloadImage();
@@ -46,18 +52,25 @@ public class WorkshopItem
     {
         using (WebClient client = new WebClient())
         {
-            client.DownloadDataAsync(new Uri(BitmapIcon));
+            client.DownloadDataAsync(new Uri(IconUri));
             client.DownloadDataCompleted += DownloadComplete;
         }
     }
     
     private void DownloadComplete(object sender, DownloadDataCompletedEventArgs e)
     {
+        if (_cancellationToken.IsCancellationRequested)
+        {
+            Console.WriteLine("Cancellation Requested! DownloadComplete Method");
+            return;
+        }
+
         try
         {
             byte[] bytes = e.Result;
             Stream stream = new MemoryStream(bytes);
             BitmapIcon = stream;
+            _afterIconDownload.Invoke(this);
         }
         catch (Exception ex)
         {
