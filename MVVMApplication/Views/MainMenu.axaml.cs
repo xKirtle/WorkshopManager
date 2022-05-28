@@ -6,6 +6,7 @@ using System.Reactive.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using MVVMApplication.ViewModels;
+using SteamworksWorker.Modules;
 
 namespace MVVMApplication.Views
 {
@@ -52,6 +53,13 @@ namespace MVVMApplication.Views
                         }
                     }).DisposeWith(_disposables);
                 }).DisposeWith(_disposables);
+        }
+
+        private void FiltersListBox_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
+        {
+            var viewModel = DataContext as MainMenuViewModel;
+            viewModel?.QueryInstance.ReleaseQuery();
+            viewModel?.SetQueryFilter((QueryType) ((ListBox) sender).SelectedIndex);
         }
     }
 }

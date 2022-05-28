@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:MVVMApplication.ViewModels"
+        xmlns:m="using:MVVMApplication.Models"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:swWorker="clr-namespace:SteamworksWorker;assembly=SteamworksWorker"
@@ -25,6 +26,7 @@
         <Color x:Key="SecondaryHighlight">#3A3A41</Color>
         <Color x:Key="SecondarySelected">#26262B</Color>
         <Color x:Key="SecondaryDarker">#1D1D20</Color>
+        <Color x:Key="TextBoxColor">#122B29</Color>
     </Window.Resources>
     
     <Window.Styles>
@@ -89,7 +91,9 @@
         
         <!-- Top Panel Location -->
         <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Background="{StaticResource PrimaryDarker}">
-
+            <TextBox Name="SearchTextBox" Grid.Column="1" Width="250" Height="26" HorizontalAlignment="Right"
+                     Margin="0 0 10 0" SelectionBrush="{StaticResource PrimaryHighlight}" 
+                     Background="{StaticResource TextBoxColor}"/>
         </Grid>
         
         <!-- Left Panel Location -->
@@ -104,13 +108,17 @@
                 <RowDefinition Height="20"/>
             </Grid.RowDefinitions>
             
-            <ListBox Grid.Column="0" Grid.ColumnSpan="2" Name="FiltersListBox" Background="Transparent" Items="{Binding FilterItems}">
+            <ListBox Grid.Column="0" Grid.ColumnSpan="2" Name="FiltersListBox" Background="Transparent" 
+                     Items="{Binding FilterItems}" SelectedIndex="0" SelectionChanged="FiltersListBox_OnSelectionChanged">
                 <ListBox.ItemTemplate>
-                    <DataTemplate DataType="TextBlock">
-                        <TextBlock Text="{Binding Text}"/>
+                    <DataTemplate DataType="{x:Type m:FilterItem}">
+                        <Panel>
+                            <TextBlock Text="{Binding Text}" VerticalAlignment="Center"/>
+                            <Image Grid.Column="1" Source="{Binding Image}" Height="20" Width="20" 
+                                   HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                        </Panel>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
-                
             </ListBox>
             
             <Button Grid.Row="1" Grid.ColumnSpan="2" Width="200" Height="36" 
@@ -140,13 +148,13 @@
                             <Image Grid.Row="0" Grid.RowSpan="3" Grid.Column="0" 
                                    Width="80" Height="80" Source="{Binding BitmapIcon}"
                                    HorizontalAlignment="Center" VerticalAlignment="Center"
-                                   Margin="0 10 0 0"/>
+                                   Margin="0 7 0 0"/>
                             
                             <TextBlock Text="{Binding DisplayName}" Grid.Row="0" Grid.Column="1" 
                                        Grid.ColumnSpan="2" Margin="5 6 0 0"/>
                             
-                            <TextBlock  Grid.Row="0" Grid.Column="1" 
-                                        Background="Gray" Margin="-6 26 0 0" Height="2"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" 
+                                       Background="Gray" Margin="-6 26 0 0" Height="2"/>
                             
                             <DockPanel Grid.Row="1" Grid.Column="1" Margin="5 4 0 0">
                                 <Button Content="{Binding Authors, StringFormat=By {0}}" 
@@ -155,8 +163,21 @@
                                 <!-- <TextBlock Text="{Binding Tags, StringFormat=Tags: {0}}" FontSize="12" Margin="10 0 0 0"/> -->
                             </DockPanel>
                             
-                            <!-- <Image Margin="100 50 0 0" Width="30" Height="30" Stretch="Fill"  -->
-                            <!--        Source="../Assets/user-solid.png" HorizontalAlignment="Left" VerticalAlignment="Center"/> -->
+                            <DockPanel Grid.Row="2" Grid.Column="1" Margin="5 0 0 0">
+                                <Image Width="20" Height="20" Stretch="UniformToFill"
+                                       Source="../Assets/user-solid.png" VerticalAlignment="Center"
+                                       HorizontalAlignment="Left"/>
+                                
+                                <TextBlock Text="{Binding Subscriptions}" Margin="5 0 0 0"
+                                           VerticalAlignment="Center"/>
+                                
+                                <Image Width="20" Height="20" Stretch="UniformToFill"
+                                       Source="../Assets/star-solid.png" VerticalAlignment="Center"
+                                       HorizontalAlignment="Left" Margin="10 0 0 0"/>
+                                
+                                <TextBlock Text="{Binding Favorites}" Margin="5 0 0 0"
+                                           VerticalAlignment="Center"/>
+                            </DockPanel>
                         </Grid>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
