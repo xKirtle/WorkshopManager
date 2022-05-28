@@ -125,6 +125,8 @@
                     Content="Settings" Margin="0 0 0 10" HorizontalContentAlignment="Left" 
                     HorizontalAlignment="Center" VerticalContentAlignment="Center" FontSize="16" 
                     Padding="15 0 0 0"/>
+            <Image Grid.Column="1" Grid.Row="1" Source="../Assets/cog-solid.png" Height="20" Width="20" 
+                   HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0 0 10 7" Focusable="False"/>
         </Grid>
         
         <!-- Right Panel Location -->
