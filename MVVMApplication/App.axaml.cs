@@ -26,7 +26,12 @@ namespace MVVMApplication
                 AppDomain.CurrentDomain.ProcessExit += (sender, eventArgs) =>
                 {
                     if (Worker.IsInitialized)
-                        mainMenuViewModel.QueryInstance?.ReleaseQuery();
+                    {
+                        if (mainMenuViewModel.QueryInstance.IsQueryActive)
+                            mainMenuViewModel.QueryInstance?.ReleaseQuery();
+                        
+                        Worker.Exit();
+                    }
                 };
             }
 
