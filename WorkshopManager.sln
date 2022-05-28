@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SteamworksWorker", "SteamworksWorker/SteamworksWorker.csproj", "{1A9D690C-C599-4ABC-984C-81576C29DA3B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MVVMApplication", "MVVMApplication\MVVMApplication.csproj", "{BE93C475-925E-4BEC-9EC8-BAF8605EA428}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1A9D690C-C599-4ABC-984C-81576C29DA3B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1A9D690C-C599-4ABC-984C-81576C29DA3B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1A9D690C-C599-4ABC-984C-81576C29DA3B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1A9D690C-C599-4ABC-984C-81576C29DA3B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BE93C475-925E-4BEC-9EC8-BAF8605EA428}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BE93C475-925E-4BEC-9EC8-BAF8605EA428}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BE93C475-925E-4BEC-9EC8-BAF8605EA428}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BE93C475-925E-4BEC-9EC8-BAF8605EA428}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

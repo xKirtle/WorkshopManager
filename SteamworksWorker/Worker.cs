@@ -11,8 +11,11 @@ public class Worker
     {
         InitializeSteamworks();
 
+        // QueryInstance instance = new(onItemHandled: item => {Console.WriteLine(item.DisplayName);});
         QueryInstance instance = new();
-        instance.QueryAllPages();
+        instance.QueryNextPage();
+        // var list = instance.RetrieveItemsList();
+        // list.ForEach(x => Console.WriteLine(x.DisplayName));
     }
 
     public static void InitializeSteamworks()

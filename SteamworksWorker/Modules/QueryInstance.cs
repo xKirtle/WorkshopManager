@@ -21,14 +21,17 @@ public sealed class QueryInstance
     private EUGCQuery _queryType;
     private uint _playtimeStats;
     private string _searchText;
+    private Action<WorkshopItem> _onItemHandled;
 
-    public QueryInstance(QueryType queryType = QueryType.MostVoted, uint playtimeStats = 30, string searchText = null)
+    public QueryInstance(QueryType queryType = QueryType.MostVoted, uint playtimeStats = 30, 
+        string searchText = null, Action<WorkshopItem> onItemHandled = default)
     {
         _queryHook = CallResult<SteamUGCQueryCompleted_t>.Create(OnQueryCompleted);
 
         _queryType = QueryHelper.queryTypeToUGCIndex[queryType];
         _playtimeStats = Math.Clamp(playtimeStats, 1, 365);
         _searchText = searchText ?? String.Empty;
+        _onItemHandled = onItemHandled;
     } 
     
     private void OnQueryCompleted(SteamUGCQueryCompleted_t pCallback, bool bIOFailure)
@@ -41,6 +44,8 @@ public sealed class QueryInstance
         if (_totalItemsMatchingQuery == 0 && pCallback.m_unTotalMatchingResults > 0)
             _totalItemsMatchingQuery = pCallback.m_unTotalMatchingResults;
     }
+
+    public List<WorkshopItem> RetrieveItemsList() => _items;
     
     private void ReleaseQuery() => SteamUGC.ReleaseQueryUGCRequest(_ugcQueryHandle);
 
@@ -170,9 +175,12 @@ public sealed class QueryInstance
                     break;
             }
 
-            _items.Add(new WorkshopItem(workshopFileId, displayName, authors, workshopDependencies, 
-                votesUpAndDown, lastUpdate, shortDescription, modIconURL, tags, subscriptions, 
-                favorites, isSubscribed, modloaderVersion, modSide));
+            WorkshopItem item = new WorkshopItem(workshopFileId, displayName, authors, workshopDependencies,
+                votesUpAndDown, lastUpdate, shortDescription, modIconURL, tags, subscriptions,
+                favorites, isSubscribed, modloaderVersion, modSide);
+            _items.Add(item);
+            
+            _onItemHandled?.Invoke(item);
         }
 
         _totalItemsQueried += _ugcQueryResultNumItems;
