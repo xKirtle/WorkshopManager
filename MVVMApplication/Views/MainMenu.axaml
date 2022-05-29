@@ -5,9 +5,9 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:swWorker="clr-namespace:SteamworksWorker;assembly=SteamworksWorker"
-        mc:Ignorable="d" d:DesignWidth="750" d:DesignHeight="397"
-        Width="750" Height="397"
-        MinWidth="750" MinHeight="397" MaxWidth="750" MaxHeight="397"
+        mc:Ignorable="d" d:DesignWidth="750" d:DesignHeight="400"
+        Width="750" Height="400"
+        MinWidth="750" MinHeight="400" MaxWidth="750" MaxHeight="400"
         x:Class="MVVMApplication.Views.MainMenu"
         Icon="/Assets/avalonia-logo.ico"
         Title="MVVMApplication">
@@ -134,7 +134,7 @@
             <ListBox Name="WorkshopItemsListBox" Background="Transparent" Items="{Binding ResultItems}" Margin="0 2 0 0">
                 <ListBox.ItemTemplate>
                     <DataTemplate DataType="{x:Type swWorker:WorkshopItem}">
-                        <Grid Background="Transparent" Height="92">
+                        <Grid Background="Transparent" Height="93">
                             <!-- Horizontal -->
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="20"/>    <!-- Title --> 
@@ -153,7 +153,7 @@
                                    Margin="0 7 0 0"/>
                             
                             <TextBlock Text="{Binding DisplayName}" Grid.Row="0" Grid.Column="1" 
-                                       Grid.ColumnSpan="2" Margin="5 6 0 0"/>
+                                       Grid.ColumnSpan="2" Margin="5 6 0 0" />
                             
                             <TextBlock Grid.Row="0" Grid.Column="1" 
                                        Background="Gray" Margin="-6 26 0 0" Height="2"/>

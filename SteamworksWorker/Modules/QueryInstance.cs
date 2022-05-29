@@ -199,7 +199,6 @@ public sealed class QueryInstance
 
             if (_cancellationToken.IsCancellationRequested)
             {
-                Console.WriteLine("Cancellation Requested! QueryInstance");
                 ReleaseQuery();
                 return;
             }

@@ -1,4 +1,5 @@
 using System.Net;
+using SteamworksWorker.Modules;
 
 namespace SteamworksWorker;
 
@@ -50,20 +51,14 @@ public class WorkshopItem
     
     private async void DownloadImage()
     {
-        using (WebClient client = new WebClient())
-        {
-            client.DownloadDataAsync(new Uri(IconUri));
-            client.DownloadDataCompleted += DownloadComplete;
-        }
+        using WebClient client = new WebClient();
+        client.DownloadDataAsync(new Uri(IconUri));
+        client.DownloadDataCompleted += DownloadComplete;
     }
     
     private void DownloadComplete(object sender, DownloadDataCompletedEventArgs e)
     {
-        if (_cancellationToken.IsCancellationRequested)
-        {
-            Console.WriteLine("Cancellation Requested! DownloadComplete Method");
-            return;
-        }
+        if (_cancellationToken.IsCancellationRequested) return;
 
         try
         {
@@ -77,12 +72,4 @@ public class WorkshopItem
             Console.WriteLine(ex);
         }
     }
-}
-
-public enum ModSide
-{
-    Both,
-    Client, 
-    Server,
-    NoSync
 }
