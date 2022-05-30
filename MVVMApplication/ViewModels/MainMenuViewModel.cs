@@ -73,20 +73,17 @@ namespace MVVMApplication.ViewModels
         
         private void AddFilterItems()
         {
-            string[] filters = new[]
+            List<FilterItem> filterItems = new()
             {
-                "Most Voted", "Most Recent", "Last Updated", "Most Subscribed", "Favorited by Friends", "Most Popular"
+                new FilterItem("Most Subscribed", "user-solid.png"),
+                new FilterItem("Most Voted", "arrow-up-solid.png"),
+                new FilterItem("Most Recent", "calendar-solid.png"),
+                new FilterItem("Most Last Updated", "clock-solid.png"),
+                new FilterItem("Favorited by Friends", "star-solid.png"),
+                new FilterItem("Most Popular", "fire-solid.png")
             };
-            string[] icons = new[]
-            {
-                "arrow-up-solid.png", "calendar-solid.png", "clock-solid.png", "user-solid.png", "star-solid.png",
-                "fire-solid.png"
-            };
-            for (int i = 0; i < filters.Length; i++)
-            {
-                FilterItem item = new FilterItem(filters[i], icons[i]);
-                FilterItems.Add(item);
-            }
+            
+            filterItems.ForEach(item => FilterItems.Add(item));
         }
     }
 }

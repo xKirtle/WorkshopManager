@@ -20,9 +20,7 @@ public sealed class QueryInstance
     private uint _playtimeStats;
     private string _searchText;
     private Action<WorkshopItem> _onItemQueried;
-
-    public bool IsQueryActive { get; private set; }
-
+    
     public QueryInstance(Action<WorkshopItem> onItemQueried,
         uint playtimeStats = 30, string searchText = null)
     {
@@ -43,12 +41,6 @@ public sealed class QueryInstance
         if (_totalItemsMatchingQuery == 0 && pCallback.m_unTotalMatchingResults > 0)
             _totalItemsMatchingQuery = pCallback.m_unTotalMatchingResults;
     }
-    
-    public void ReleaseQuery()
-    {
-        SteamUGC.ReleaseQueryUGCRequest(_ugcQueryHandle);
-        IsQueryActive = false;
-    }
 
     public void QueryAllPages()
     {
@@ -65,7 +57,6 @@ public sealed class QueryInstance
     public void QueryNextPage()
     {
         if (_totalItemsMatchingQuery != 0 && _totalItemsMatchingQuery == _totalItemsQueried) return;
-        IsQueryActive = true;
         
         _ugcQueryResultState = EResult.k_EResultNone;
         UGCQueryHandle_t qHandle =
@@ -99,7 +90,7 @@ public sealed class QueryInstance
         {
             _errorState = _ugcQueryResultState;
             Console.WriteLine("Error: No connection to the workshop?");
-            ReleaseQuery();
+            SteamUGC.ReleaseQueryUGCRequest(_ugcQueryHandle);
             return;
         }
 
@@ -201,7 +192,7 @@ public sealed class QueryInstance
         }
 
         _totalItemsQueried += _ugcQueryResultNumItems;
-        ReleaseQuery();
+        SteamUGC.ReleaseQueryUGCRequest(_ugcQueryHandle);
     }
 
     public void GetWorkshopTags()

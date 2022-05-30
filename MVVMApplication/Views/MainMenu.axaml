@@ -94,8 +94,8 @@
         
         <!-- Top Panel Location -->
         <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Background="{StaticResource PrimaryDarker}">
-            <ComboBox Width="178" Margin="10 0 0 0" HorizontalAlignment="Left" VerticalAlignment="Center"
-                      SelectedIndex="0">
+            <ComboBox Name="PlayTimeComboBox" Width="178" Margin="10 0 0 0" HorizontalAlignment="Left" 
+                      VerticalAlignment="Center" SelectedIndex="0">
                 <ComboBoxItem>Today</ComboBoxItem>
                 <ComboBoxItem>One Week</ComboBoxItem>
                 <ComboBoxItem>Three Months</ComboBoxItem>
