@@ -27,6 +27,9 @@
         <Color x:Key="SecondarySelected">#26262B</Color>
         <Color x:Key="SecondaryDarker">#1D1D20</Color>
         <Color x:Key="TextBoxColor">#122B29</Color>
+        
+        <Image x:Key="DefaultImage" Width="80" Height="80" Source="../Assets/cog-solid.png"/>
+        
     </Window.Resources>
     
     <Window.Styles>
@@ -157,7 +160,7 @@
                             </Grid.ColumnDefinitions>
                             
                             <Image Grid.Row="0" Grid.RowSpan="3" Grid.Column="0" 
-                                   Width="80" Height="80" Source="{Binding BitmapIcon}"
+                                   Width="80" Height="80" Source="{Binding BitmapIcon, TargetNullValue={StaticResource DefaultImage}}"
                                    HorizontalAlignment="Center" VerticalAlignment="Center"
                                    Margin="0 7 0 0"/>
                             

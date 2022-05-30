@@ -130,6 +130,7 @@ public sealed class QueryInstance
             ulong favorites;
             bool isSubscribed = (SteamUGC.GetItemState(pDetails.m_nPublishedFileId) & (ulong)EItemState.k_EItemStateSubscribed) == 1;
             string modloaderVersion;
+            string internalName;
             
             PublishedFileId_t[] itemDependencies = new PublishedFileId_t[32]; //No item should have more than 32 dependencies? lol
             if (!SteamUGC.GetQueryUGCChildren(qHandle, i, itemDependencies, (uint) itemDependencies.Length))
@@ -177,7 +178,7 @@ public sealed class QueryInstance
 
             authors = metadata["author"];
             modloaderVersion = metadata["modloaderversion"];
-            
+
             ModSide modSide = ModSide.Both;
             switch (metadata["modside"])
             {
@@ -194,9 +195,9 @@ public sealed class QueryInstance
 
             WorkshopItem item = new WorkshopItem(workshopFileId, displayName, authors, workshopDependencies,
                 votesUpAndDown, lastUpdate, shortDescription, modIconURL, tags, subscriptions,
-                favorites, isSubscribed, modloaderVersion, modSide, _onItemQueried);
+                favorites, isSubscribed, modloaderVersion, modSide);
             
-            // _onItemQueried.Invoke(item);
+            _onItemQueried.Invoke(item);
         }
 
         _totalItemsQueried += _ugcQueryResultNumItems;
