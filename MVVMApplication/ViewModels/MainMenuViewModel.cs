@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
+using System.Reactive;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,6 +14,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using DynamicData;
 using MVVMApplication.Models;
+using ReactiveUI;
 using SteamworksWorker;
 using SteamworksWorker.Modules;
 
@@ -19,26 +22,30 @@ namespace MVVMApplication.ViewModels
 {
     public class MainMenuViewModel : ViewModelBase
     {
+        public static MainMenuViewModel Instance;
         public ObservableCollection<FilterItem> FilterItems { get; }
-        public ObservableCollection<WorkshopItem> ResultItems { get; }
+        public ObservableCollection<WorkshopItem> WorkshopVisibleItems { get; }
         public bool IsAddingItems { get; private set; } = false;
         public QueryInstance QueryInstance;
-        
-        private CancellationTokenSource _cancellationTokenSource;
-        private CancellationToken _cancellationToken;
-        
+
+        private List<WorkshopItem> _items;
+
         public MainMenuViewModel()
         {
-            _cancellationTokenSource = new();
-            _cancellationToken = _cancellationTokenSource.Token;
+            Instance = this;
             
-            QueryInstance = new(_cancellationToken, onItemHandled: AddItemToResultItems);
-            ResultItems = new();
+            QueryInstance = new(AddItemToResultItems);
+            //To avoid resizes
+            WorkshopVisibleItems = new();
             FilterItems = new();
+            _items = new();
             AddFilterItems();
+
+            AsyncFetchWorkshopItems();
+            //TODO: Stop abusing steam's api and lazy load all mods to later filter locally?
         }
 
-        public async Task AsyncAddItems()
+        public async Task AsyncFetchWorkshopItems()
         {
             //Necessary lock mechanism for if the user is scrolling too fast
             IsAddingItems = true;
@@ -49,27 +56,12 @@ namespace MVVMApplication.ViewModels
             });
         }
 
-        public void SetQueryFilter(QueryType type)
-        {
-            //Sending a cancellation request to any tasks that might be running
-            //Necessary for if the user swaps between filters too fast and some
-            //tasks, like downloading the mods icon might still be in progress
-            _cancellationTokenSource.Cancel();
-            _cancellationTokenSource.Dispose();
-            _cancellationTokenSource = new();
-            _cancellationToken = _cancellationTokenSource.Token;
-
-            ResultItems.Clear();
-            QueryInstance = new QueryInstance(_cancellationToken, onItemHandled: AddItemToResultItems, queryType: type);
-            AsyncAddItems();
-        }
-
         private void AddItemToResultItems(WorkshopItem item)
         {
             ConvertStreamToBitmap(item);
-            ResultItems.Add(item);
+            WorkshopVisibleItems.Add(item);
         }
-        
+
         private void ConvertStreamToBitmap(WorkshopItem workshopItem) =>
             workshopItem.BitmapIcon = new Bitmap(workshopItem.BitmapIcon);
 

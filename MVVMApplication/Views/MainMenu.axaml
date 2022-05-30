@@ -91,9 +91,18 @@
         
         <!-- Top Panel Location -->
         <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Background="{StaticResource PrimaryDarker}">
-            <TextBox Name="SearchTextBox" Grid.Column="1" Width="250" Height="26" HorizontalAlignment="Right"
-                     Margin="0 0 10 0" SelectionBrush="{StaticResource PrimaryHighlight}" 
-                     Background="{StaticResource TextBoxColor}"/>
+            <ComboBox Width="178" Margin="10 0 0 0" HorizontalAlignment="Left" VerticalAlignment="Center"
+                      SelectedIndex="0">
+                <ComboBoxItem>Today</ComboBoxItem>
+                <ComboBoxItem>One Week</ComboBoxItem>
+                <ComboBoxItem>Three Months</ComboBoxItem>
+                <ComboBoxItem>Six Months</ComboBoxItem>
+                <ComboBoxItem>One Year</ComboBoxItem>
+                <ComboBoxItem>All Time</ComboBoxItem>
+            </ComboBox>
+                <TextBox Name="SearchTextBox" Grid.Column="1" Width="250" Height="26" HorizontalAlignment="Right"
+                         Margin="0 0 10 0" VerticalAlignment="Center" SelectionBrush="{StaticResource PrimaryHighlight}" 
+                         Background="{StaticResource TextBoxColor}"/>
         </Grid>
         
         <!-- Left Panel Location -->
@@ -131,7 +140,7 @@
         
         <!-- Right Panel Location -->
         <Grid Grid.Row="1" Grid.Column="1" Background="{StaticResource SecondaryDarker}">
-            <ListBox Name="WorkshopItemsListBox" Background="Transparent" Items="{Binding ResultItems}" Margin="0 2 0 0">
+            <ListBox Name="WorkshopItemsListBox" Background="Transparent" Items="{Binding WorkshopVisibleItems}" Margin="0 2 0 0">
                 <ListBox.ItemTemplate>
                     <DataTemplate DataType="{x:Type swWorker:WorkshopItem}">
                         <Grid Background="Transparent" Height="93">
@@ -179,6 +188,14 @@
                                 
                                 <TextBlock Text="{Binding Favorites}" Margin="5 0 0 0"
                                            VerticalAlignment="Center"/>
+                                
+                                <Button Width="30" Height="30" VerticalAlignment="Center" 
+                                        HorizontalAlignment="Right" Tag="{Binding WorkshopFileID}" 
+                                        Click="DownloadButton_OnClick">
+                                    <Image Width="20" Height="20" Stretch="UniformToFill" 
+                                           Source="../Assets/arrow-down-solid.png"
+                                           VerticalAlignment="Center" HorizontalAlignment="Center"/>    
+                                </Button>
                             </DockPanel>
                         </Grid>
                     </DataTemplate>

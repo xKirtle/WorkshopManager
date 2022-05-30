@@ -7,7 +7,6 @@ namespace SteamworksWorker.Modules;
 public sealed class QueryInstance
 {
     private EResult _errorState;
-    private List<WorkshopItem> _items = new (Constants.k_unEnumeratePublishedFilesMaxResults);
     private uint _totalItemsMatchingQuery;
     private uint _totalItemsQueried;
     private UGCQueryHandle_t _ugcQueryHandle;
@@ -16,26 +15,22 @@ public sealed class QueryInstance
     private string _nextCursor;
     private readonly CallResult<SteamUGCQueryCompleted_t> _queryHook;
     private const EUGCMatchingUGCType QueryResultType = EUGCMatchingUGCType.k_EUGCMatchingUGCType_Items;
-    private CancellationToken _cancellationToken;
 
     //Fields that can be changed
-    private EUGCQuery _queryType;
     private uint _playtimeStats;
     private string _searchText;
-    private Action<WorkshopItem> _onItemHandled;
-    
+    private Action<WorkshopItem> _onItemQueried;
+
     public bool IsQueryActive { get; private set; }
 
-    public QueryInstance(CancellationToken cancellationToken, QueryType queryType = QueryType.MostVoted, uint playtimeStats = 30, 
-        string searchText = null, Action<WorkshopItem> onItemHandled = default)
+    public QueryInstance(Action<WorkshopItem> onItemQueried,
+        uint playtimeStats = 30, string searchText = null)
     {
         _queryHook = CallResult<SteamUGCQueryCompleted_t>.Create(OnQueryCompleted);
-
-        _cancellationToken = cancellationToken;
-        _queryType = QueryHelper.queryTypeToUGCIndex[queryType];
+        
         _playtimeStats = Math.Clamp(playtimeStats, 1, 365);
         _searchText = searchText ?? String.Empty;
-        _onItemHandled = onItemHandled;
+        _onItemQueried = onItemQueried;
     } 
     
     private void OnQueryCompleted(SteamUGCQueryCompleted_t pCallback, bool bIOFailure)
@@ -48,9 +43,7 @@ public sealed class QueryInstance
         if (_totalItemsMatchingQuery == 0 && pCallback.m_unTotalMatchingResults > 0)
             _totalItemsMatchingQuery = pCallback.m_unTotalMatchingResults;
     }
-
-    public List<WorkshopItem> RetrieveItemsList() => _items;
-
+    
     public void ReleaseQuery()
     {
         SteamUGC.ReleaseQueryUGCRequest(_ugcQueryHandle);
@@ -76,7 +69,7 @@ public sealed class QueryInstance
         
         _ugcQueryResultState = EResult.k_EResultNone;
         UGCQueryHandle_t qHandle =
-            SteamUGC.CreateQueryAllUGCRequest(_queryType, QueryResultType, 
+            SteamUGC.CreateQueryAllUGCRequest(EUGCQuery.k_EUGCQuery_RankedByTotalUniqueSubscriptions, QueryResultType, 
                 QueryHelper.TMLAppID_t, QueryHelper.TMLAppID_t, _nextCursor);
 
         SteamUGC.SetLanguage(qHandle, QueryHelper.GetCurrentSteamLangKey());
@@ -85,6 +78,8 @@ public sealed class QueryInstance
         SteamUGC.SetReturnChildren(qHandle, true);
         SteamUGC.SetSearchText(qHandle, _searchText);
         
+        // SteamUGC.AddRequiredTag(qHandle, "Custom World Gen");
+        // SteamUGC.SetMatchAnyTag(qHandle, true);
         //TODO: Add other api calls that we'd like the qHandle to retrieve
         
         _queryHook.Set(SteamUGC.SendQueryUGCRequest(qHandle));
@@ -113,7 +108,7 @@ public sealed class QueryInstance
             //Item result call data
             SteamUGCDetails_t pDetails;
             SteamUGC.GetQueryUGCResult(_ugcQueryHandle, i, out pDetails);
-
+            
             //Skip over any non visible or failed queries
             if (pDetails.m_eVisibility !=
                 ERemoteStoragePublishedFileVisibility.k_ERemoteStoragePublishedFileVisibilityPublic
@@ -197,19 +192,26 @@ public sealed class QueryInstance
                     break;
             }
 
-            if (_cancellationToken.IsCancellationRequested)
-            {
-                ReleaseQuery();
-                return;
-            }
-            
             WorkshopItem item = new WorkshopItem(workshopFileId, displayName, authors, workshopDependencies,
                 votesUpAndDown, lastUpdate, shortDescription, modIconURL, tags, subscriptions,
-                favorites, isSubscribed, modloaderVersion, modSide, _cancellationToken, _onItemHandled);
-            _items.Add(item); //Not even using this anymore?
+                favorites, isSubscribed, modloaderVersion, modSide, _onItemQueried);
+            
+            // _onItemQueried.Invoke(item);
         }
 
         _totalItemsQueried += _ugcQueryResultNumItems;
         ReleaseQuery();
+    }
+
+    public void GetWorkshopTags()
+    {
+        _ugcQueryResultState = EResult.k_EResultNone;
+        UGCQueryHandle_t qHandle = SteamUGC.CreateQueryAllUGCRequest(EUGCQuery.k_EUGCQuery_RankedByTotalUniqueSubscriptions, 
+            QueryResultType, QueryHelper.TMLAppID_t, QueryHelper.TMLAppID_t, _nextCursor);
+        
+        // SteamUGC.GetQueryUGCNumTags(qHandle, )
+
+        SteamUGC.AddRequiredTag(qHandle, "New Content");
+        // SteamUGC.SetMatchAnyTag(qHandle, true);
     }
 }

@@ -41,14 +41,4 @@ internal static class QueryHelper
         Console.WriteLine(error);
         return false;
     }
-
-    internal static Dictionary<QueryType, EUGCQuery> queryTypeToUGCIndex = new ()
-    {
-        {QueryType.MostVoted, EUGCQuery.k_EUGCQuery_RankedByVote},
-        {QueryType.MostRecent, EUGCQuery.k_EUGCQuery_RankedByPublicationDate},
-        {QueryType.LastUpdated, EUGCQuery.k_EUGCQuery_RankedByLastUpdatedDate},
-        {QueryType.MostSubscribed, EUGCQuery.k_EUGCQuery_RankedByTotalUniqueSubscriptions},
-        {QueryType.FavoritedByFriends, EUGCQuery.k_EUGCQuery_FavoritedByFriendsRankedByPublicationDate},
-        {QueryType.MostPopular, EUGCQuery.k_EUGCQuery_RankedByTrend}
-    };
 }
