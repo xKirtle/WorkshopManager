@@ -12,7 +12,9 @@ using Avalonia.Controls.Templates;
 using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Layout;
 using Avalonia.LogicalTree;
+using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using DynamicData;
@@ -77,11 +79,81 @@ namespace MVVMApplication.Views
 
             FuncDataTemplate<WorkshopItem> template = new FuncDataTemplate<WorkshopItem>((item, scope) =>
             {
-                TextBlock textBlock = new TextBlock
+                Grid grid = new Grid
                 {
-                    [!TextBlock.TextProperty] = new Binding("DisplayName")
+                    Height = 93,
+                    Background = Brushes.Transparent,
+                    ShowGridLines = true,
                 };
-                return textBlock;
+                grid.RowDefinitions.Add(new RowDefinition(GridLength.Star));
+                grid.RowDefinitions.Add(new RowDefinition(GridLength.Star));
+                grid.RowDefinitions.Add(new RowDefinition(GridLength.Star));
+
+                grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Parse("50")));
+                grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Parse("92")));
+                grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+
+                Image icon = new Image()
+                {
+                    Width = Height = 80,
+                    [!Image.SourceProperty] = new Binding("BitmapIcon"),
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center
+                };
+                
+                Grid.SetRow(icon, 0);
+                Grid.SetRowSpan(icon, 3);
+                Grid.SetColumn(icon, 1);
+                grid.Children.Add(icon);
+
+                TextBlock displayName = new TextBlock
+                {
+                    [!TextBlock.TextProperty] = new Binding("DisplayName"),
+                    VerticalAlignment = VerticalAlignment.Bottom,
+                    HorizontalAlignment = HorizontalAlignment.Left,
+                    FontSize =  16,
+                    Margin = new Thickness(5, 0, 0, 2),
+                };
+                
+                Grid.SetColumn(displayName, 2);
+                grid.Children.Add(displayName);
+                
+                TextBlock displayNameUnderline = new TextBlock()
+                {
+                    Height = 2,
+                    Background = Brushes.Gray,
+                    VerticalAlignment = VerticalAlignment.Bottom
+                };
+                
+                Grid.SetColumn(displayNameUnderline, 2);
+                grid.Children.Add(displayNameUnderline);
+
+                Button authors = new Button()
+                {
+                    Height = 20,
+                    Content = "Show Authors",
+                    FontSize = 12,
+                    Focusable = false,
+                    Margin = new Thickness(5, 0, 0, 0)
+                };
+                
+                authors.Click += (sender, args) =>
+                {
+                    //TODO: Show tooltip
+                    ToolTip toolTip = new ToolTip()
+                    {
+                        [!ToolTip.ContentProperty] = new Binding("Authors"),
+                        
+                    };
+                    ToolTip.SetTip(authors, toolTip.Content);
+                    ToolTip.SetIsOpen(toolTip, true);
+                };
+
+                Grid.SetRow(authors, 1);
+                Grid.SetColumn(authors, 2);
+                grid.Children.Add(authors);
+                
+                return grid;
             });
 
             // (sender as ListBox).DataTemplates.Add(template);
