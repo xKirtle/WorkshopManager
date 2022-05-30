@@ -33,7 +33,7 @@ public class WorkshopItem
         LastUpdate = lastUpdate;
         ShortDescription = shortDescription;
         IconUri = iconUri;
-        Tags = tags;
+        Tags = tags != "" ? tags : "No tags";
         Subscriptions = subscriptions;
         Favorites = favorites;
         IsSubscribed = isSubscribed;

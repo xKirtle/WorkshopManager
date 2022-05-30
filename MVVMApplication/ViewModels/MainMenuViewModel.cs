@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Reactive;
+using System.Reactive.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -28,20 +29,21 @@ namespace MVVMApplication.ViewModels
         public ObservableCollection<FilterItem> FilterItems { get; }
         public ObservableCollection<WorkshopItem> WorkshopVisibleItems { get; set; }
         public Dictionary<ulong, WorkshopItem> ItemsDictionary { get; private set; }
-        private ImmutableList<WorkshopItem> _fixedWorkshopItemsList;
+        private List<WorkshopItem> _fixedWorkshopItemsList;
         private List<WorkshopItem> _filteredWorkshopItemsList;
-        public QueryInstance QueryInstance;
+        private QueryInstance QueryInstance;
         private AutoResetEvent _evtSignalling;
         private string _prevText;
 
+        private const int InitialzeNum = 2048;
         public MainMenuViewModel()
         {
             QueryInstance = new(AddItemToResultItems);
             WorkshopVisibleItems = new();
             FilterItems = new();
-            ItemsDictionary = new();
-            _fixedWorkshopItemsList = ImmutableList<WorkshopItem>.Empty;
-            _filteredWorkshopItemsList = new();
+            ItemsDictionary = new(InitialzeNum);
+            _fixedWorkshopItemsList = new(InitialzeNum);
+            _filteredWorkshopItemsList = new(InitialzeNum);
             _evtSignalling = new(false);
             AddFilterItems();
             AsyncFetchWorkshopItems();
@@ -49,20 +51,27 @@ namespace MVVMApplication.ViewModels
 
         public Task AsyncFetchWorkshopItems() => Task.Run(() => QueryInstance.QueryAllPages());
         
-        //TODO: https://stackoverflow.com/questions/22873541/search-on-textchanged-with-reactive-extensions
-        public void FilterItemsByName(string text)
+        public void AsyncFilterItemsByKeyword(string text)
         {
             if (text == _prevText) return;
 
-            List<WorkshopItem> filteredList = new();
-            WorkshopVisibleItems.Clear();
-            if (!String.IsNullOrEmpty(text))
+            Task.Run(() =>
             {
-                filteredList = _filteredWorkshopItemsList.FindAll(x => x.DisplayName.Contains(text));
+                List<WorkshopItem> filteredList = new();
+                WorkshopVisibleItems.Clear();
                 _prevText = text;
-                WorkshopVisibleItems.AddRange(filteredList);
-            }
-            else WorkshopVisibleItems.AddRange(_filteredWorkshopItemsList);
+                if (!String.IsNullOrEmpty(text))
+                {
+                    _filteredWorkshopItemsList.ForEach(item =>
+                    {
+                        if (item.DisplayName.Contains(text, StringComparison.CurrentCultureIgnoreCase) 
+                            || item.ShortDescription.Contains(text, StringComparison.CurrentCultureIgnoreCase) 
+                            || item.Tags.Contains(text, StringComparison.CurrentCultureIgnoreCase))
+                            WorkshopVisibleItems.Add(item);
+                    });
+                }
+                else WorkshopVisibleItems.AddRange(_filteredWorkshopItemsList); 
+            });
         }
 
         public void ChangeFilter(int filterIndex)
@@ -98,7 +107,7 @@ namespace MVVMApplication.ViewModels
                 _evtSignalling.Set();
             }
         }
-        
+
         private void AddFilterItems()
         {
             List<FilterItem> filterItems = new()

@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
+using System.Threading;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -34,56 +35,39 @@ namespace MVVMApplication.Views
             var viewModel = DataContext as MainMenuViewModel;
         }
 
-        private void DownloadButton_OnClick(object? sender, RoutedEventArgs e)
-        {
-            var button = (sender as Button);
-            ulong workshopFileID = (ulong)button.Tag;
-            var workshopItem = ((WorkshopItem) button.Parent.Parent.Parent.DataContext);
-        }
-
-        private void VotingButton_OnClick(object? sender, RoutedEventArgs e)
-        {
-            string[] tags = (sender as Button).Tag.ToString().Split(", ");
-            bool isVoteUp = tags[0] == "Up";
-            ulong workshopFileID = ulong.Parse(tags[1]);
-        }
+        // private void DownloadButton_OnClick(object? sender, RoutedEventArgs e)
+        // {
+        //     var button = (sender as Button);
+        //     ulong workshopFileID = (ulong)button.Tag;
+        //     var workshopItem = ((WorkshopItem) button.Parent.Parent.Parent.DataContext);
+        // }
+        //
+        // private void VotingButton_OnClick(object? sender, RoutedEventArgs e)
+        // {
+        //     string[] tags = (sender as Button).Tag.ToString().Split(", ");
+        //     bool isVoteUp = tags[0] == "Up";
+        //     ulong workshopFileID = ulong.Parse(tags[1]);
+        // }
 
         private void SearchTextBox_OnKeyUp(object? sender, KeyEventArgs e)
         {
             var viewModel = DataContext as MainMenuViewModel;
-            viewModel.FilterItemsByName(SearchTextBox.Text);
+            viewModel.AsyncFilterItemsByKeyword(SearchTextBox.Text);
         }
 
-        private void ImageTemplate_OnInitialized(object? sender, EventArgs e)
-        {
-            //TODO: Having to go through every single item again to change subscription image sucks
-            //Look into how to create my DataTemplate for the ListBoxItem programatically?
-            // Image image = sender as Image;
-            //
-            // //Not really the item itself..?
-            // WorkshopItem item = image.Parent.Parent.Parent.DataContext as WorkshopItem;
-            //
-            // if (item.IsSubscribed)
-            // {
-            //     Console.WriteLine(item.DisplayName);
-            //     var assets = AvaloniaLocator.Current.GetService<IAssetLoader>();
-            //     // image.Source = new Bitmap(assets.Open(new Uri("avares://MVVMApplication/Assets/check-solid.png")));
-            // }
-        }
-
-        //https://github.com/AvaloniaUI/Avalonia/blob/c1b93d4da2006b73ccc451cea95611a252fb5888/tests/Avalonia.Controls.UnitTests/Presenters/ItemsPresenterTests_Virtualization.cs#L302
-        //Or if making a template in a different xaml window.. (var template = (DataTemplate)new AvaloniaXamlLoader().Load(xaml);)
         private void WorkshopItemsListBox_OnInitialized(object? sender, EventArgs e)
         {
             ListBox listBox = (sender as ListBox);
+            var assetsLoader = AvaloniaLocator.Current.GetService<IAssetLoader>();
+            string uriPath = "avares://MVVMApplication/Assets/";
 
             FuncDataTemplate<WorkshopItem> template = new FuncDataTemplate<WorkshopItem>((item, scope) =>
             {
                 Grid grid = new Grid
                 {
                     Height = 93,
-                    Background = Brushes.Transparent,
-                    ShowGridLines = true,
+                    Background = Brushes.Transparent
+                    // ShowGridLines = true
                 };
                 grid.RowDefinitions.Add(new RowDefinition(GridLength.Star));
                 grid.RowDefinitions.Add(new RowDefinition(GridLength.Star));
@@ -93,12 +77,69 @@ namespace MVVMApplication.Views
                 grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Parse("92")));
                 grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
 
+                StackPanel ratingPanel = new StackPanel()
+                {
+                    VerticalAlignment = VerticalAlignment.Center,
+                    HorizontalAlignment = HorizontalAlignment.Left,
+                    Margin = new Thickness(0, -4, 0, 0)
+                };
+                
+                Grid.SetRowSpan(ratingPanel, 3);
+                grid.Children.Add(ratingPanel);
+
+                Button voteUpButton = new Button()
+                {
+                    VerticalAlignment = VerticalAlignment.Center,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    Padding = new Thickness(5, 3, 5, 0)
+                };
+                
+                Image voteUpImage = new Image()
+                {
+                    Width = Height = 30,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    Source = new Bitmap(assetsLoader.Open(new Uri(uriPath + "votingUp.png")))
+                };
+
+                voteUpButton.Content = voteUpImage;
+                ratingPanel.Children.Add(voteUpButton);
+
+                TextBlock votingRatio = new TextBlock()
+                {
+                    [!TextBlock.TextProperty] = new Binding("VotesRatio"),
+                    VerticalAlignment = VerticalAlignment.Center,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    Margin = new Thickness(0, 5)
+                };
+                
+                ratingPanel.Children.Add(votingRatio);
+                
+                Button voteDownButton = new Button()
+                {
+                    VerticalAlignment = VerticalAlignment.Center,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    Padding = new Thickness(5, 3, 5, 0)
+                };
+                
+                Image voteDownImage = new Image()
+                {
+                    Width = Height = 30,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    Source = new Bitmap(assetsLoader.Open(new Uri(uriPath + "votingDown.png")))
+                };
+                
+                voteDownButton.Content = voteDownImage;
+                ratingPanel.Children.Add(voteDownButton);
+                
                 Image icon = new Image()
                 {
                     Width = Height = 80,
                     [!Image.SourceProperty] = new Binding("BitmapIcon"),
                     HorizontalAlignment = HorizontalAlignment.Center,
-                    VerticalAlignment = VerticalAlignment.Center
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Margin = new Thickness(0, 3, 0, 0)
                 };
                 
                 Grid.SetRow(icon, 0);
@@ -128,6 +169,11 @@ namespace MVVMApplication.Views
                 Grid.SetColumn(displayNameUnderline, 2);
                 grid.Children.Add(displayNameUnderline);
 
+                DockPanel secondRowDockPanel = new DockPanel();
+                Grid.SetRow(secondRowDockPanel, 1);
+                Grid.SetColumn(secondRowDockPanel, 2);
+                grid.Children.Add(secondRowDockPanel);
+                
                 Button authors = new Button()
                 {
                     Height = 20,
@@ -137,26 +183,121 @@ namespace MVVMApplication.Views
                     Margin = new Thickness(5, 0, 0, 0)
                 };
                 
-                authors.Click += (sender, args) =>
+                ToolTip toolTipAuthors = new ToolTip()
                 {
-                    //TODO: Show tooltip
-                    ToolTip toolTip = new ToolTip()
-                    {
-                        [!ToolTip.ContentProperty] = new Binding("Authors"),
-                        
-                    };
-                    ToolTip.SetTip(authors, toolTip.Content);
-                    ToolTip.SetIsOpen(toolTip, true);
+                    [!ToolTip.ContentProperty] = new Binding("Authors"),
+                };
+                
+                ToolTip.SetTip(authors, toolTipAuthors);
+                ToolTip.SetPlacement(authors, PlacementMode.Pointer);
+                
+                secondRowDockPanel.Children.Add(authors);
+
+                Button tags = new Button()
+                {
+                    Height = 20,
+                    Content = "Show Tags",
+                    FontSize = 12,
+                    Focusable = false,
+                    Margin = new Thickness(5, 0, 0, 0)
+                };
+                
+                ToolTip toolTipTags = new ToolTip()
+                {
+                    [!ToolTip.ContentProperty] = new Binding("Tags"),
+                };
+                
+                ToolTip.SetTip(tags, toolTipTags);
+                ToolTip.SetPlacement(tags, PlacementMode.Pointer);
+                
+                secondRowDockPanel.Children.Add(tags);
+
+                Binding modSideBinding = new Binding("ModSide");
+                modSideBinding.StringFormat = "Mod Side: {0}";
+                Button modSide = new Button()
+                {
+                    Height = 20,
+                    [!Button.ContentProperty] = modSideBinding,
+                    FontSize = 12,
+                    Focusable = false,
+                    Margin = new Thickness(5, 0, 0, 0)
+                };
+                
+                secondRowDockPanel.Children.Add(modSide);
+                
+                Button subscribeButton = new Button()
+                {
+                    Width = 40,
+                    Height = 40,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    HorizontalAlignment = HorizontalAlignment.Right,
+                    Margin = new Thickness(0, 30, 0, 0)
                 };
 
-                Grid.SetRow(authors, 1);
-                Grid.SetColumn(authors, 2);
-                grid.Children.Add(authors);
+                Image subscribeImage = new Image()
+                {
+                    Width = Height = 30,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                };
+
+                string iconName = item.IsSubscribed ? "check-solid.png" : "arrow-down-solid.png";
+                subscribeImage.Source = new Bitmap(assetsLoader.Open(new Uri(uriPath + iconName)));
+
+                subscribeButton.Content = subscribeImage;
+                secondRowDockPanel.Children.Add(subscribeButton);
                 
+                DockPanel thirdRowDockPanel = new DockPanel();
+                thirdRowDockPanel.Margin = new Thickness(0, -8, 0, 0);
+                Grid.SetRow(thirdRowDockPanel, 2);
+                Grid.SetColumn(thirdRowDockPanel, 2);
+                grid.Children.Add(thirdRowDockPanel);
+
+                Image subsImage = new Image()
+                {
+                    Width = Height = 20,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    HorizontalAlignment = HorizontalAlignment.Left,
+                    Source = new Bitmap(assetsLoader.Open(new Uri(uriPath + "user-solid.png"))),
+                    Margin = new Thickness(5, 0, 0, 0)
+                };
+                
+                thirdRowDockPanel.Children.Add(subsImage);
+
+                TextBlock subsText = new TextBlock()
+                {
+                    [!TextBlock.TextProperty] = new Binding("Subscriptions"),
+                    VerticalAlignment = VerticalAlignment.Center,
+                    HorizontalAlignment = HorizontalAlignment.Left,
+                    Margin = new Thickness(5, 0, 0, 0)
+                };
+                
+                thirdRowDockPanel.Children.Add(subsText);
+                
+                Image favImage = new Image()
+                {
+                    Width = Height = 20,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    HorizontalAlignment = HorizontalAlignment.Left,
+                    Source = new Bitmap(assetsLoader.Open(new Uri(uriPath + "star-solid.png"))),
+                    Margin = new Thickness(10, 0, 0, 0)
+                };
+                
+                thirdRowDockPanel.Children.Add(favImage);
+
+                TextBlock favText = new TextBlock()
+                {
+                    [!TextBlock.TextProperty] = new Binding("Favorites"),
+                    VerticalAlignment = VerticalAlignment.Center,
+                    HorizontalAlignment = HorizontalAlignment.Left,
+                    Margin = new Thickness(5, 0, 0, 0)
+                };
+                
+                thirdRowDockPanel.Children.Add(favText);
+
                 return grid;
             });
 
-            // (sender as ListBox).DataTemplates.Add(template);
             listBox.ItemTemplate = template;
         }
     }
