@@ -112,7 +112,7 @@ public sealed class QueryInstance
             string displayName = pDetails.m_rgchTitle;
             string authors;
             ulong[] workshopDependencies;
-            uint[] votesUpAndDown = new[] {pDetails.m_unVotesUp, pDetails.m_unVotesDown};
+            int votesRatio = (int) (pDetails.m_unVotesUp - pDetails.m_unVotesDown);
             DateTime lastUpdate = DateTimeOffset.FromUnixTimeSeconds(pDetails.m_rtimeUpdated).UtcDateTime;
             string shortDescription = pDetails.m_rgchDescription;
             string modIconURL;
@@ -185,7 +185,7 @@ public sealed class QueryInstance
             }
 
             WorkshopItem item = new WorkshopItem(workshopFileId, displayName, authors, workshopDependencies,
-                votesUpAndDown, lastUpdate, shortDescription, modIconURL, tags, subscriptions,
+                votesRatio, lastUpdate, shortDescription, modIconURL, tags, subscriptions,
                 favorites, isSubscribed, modloaderVersion, modSide);
             
             _onItemQueried.Invoke(item);

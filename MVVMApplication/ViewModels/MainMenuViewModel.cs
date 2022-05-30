@@ -25,10 +25,9 @@ namespace MVVMApplication.ViewModels
     public class MainMenuViewModel : ViewModelBase
     {
         public ObservableCollection<FilterItem> FilterItems { get; }
-        public ObservableCollection<WorkshopItem> WorkshopVisibleItems { get; }
+        public ObservableCollection<WorkshopItem> WorkshopVisibleItems { get; set; }
+        public Dictionary<ulong, WorkshopItem> ItemsDictionary { get; private set; }
         public QueryInstance QueryInstance;
-        
-        private Dictionary<ulong, WorkshopItem> _itemsDictionary;
         private AutoResetEvent _evtSignalling;
 
         public MainMenuViewModel()
@@ -36,7 +35,7 @@ namespace MVVMApplication.ViewModels
             QueryInstance = new(AddItemToResultItems);
             WorkshopVisibleItems = new();
             FilterItems = new();
-            _itemsDictionary = new();
+            ItemsDictionary = new();
             _evtSignalling = new(false);
             AddFilterItems();
             AsyncFetchWorkshopItems();
@@ -53,7 +52,7 @@ namespace MVVMApplication.ViewModels
                 _evtSignalling.WaitOne();
             
             WorkshopVisibleItems.Add(item);
-            _itemsDictionary.Add(item.WorkshopFileID, item);
+            ItemsDictionary.Add(item.WorkshopFileID, item);
         }
         
         private void DownloadImage(WorkshopItem item)

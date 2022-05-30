@@ -9,7 +9,7 @@ public class WorkshopItem
     public string DisplayName { get; private set; }
     public string Authors { get; set; }
     public ulong[] WorkshopDependencies { get; private set; }
-    public uint[] VotesUpAndDown { get; private set; }
+    public int VotesRatio { get; private set; }
     public DateTime LastUpdate { get; private set; }
     public string ShortDescription { get; private set; }
     public string IconUri { get; set; }
@@ -22,14 +22,14 @@ public class WorkshopItem
     public ModSide ModSide { get; private set; }
 
     public WorkshopItem(ulong workshopFileId, string displayName, string authors, ulong[] workshopDependencies, 
-        uint[] votesUpAndDown, DateTime lastUpdate, string shortDescription, string iconUri, string tags, 
+        int votesRatio, DateTime lastUpdate, string shortDescription, string iconUri, string tags, 
         ulong subscriptions, ulong favorites, bool isSubscribed, string modLoaderVersion, ModSide modSide)
     {
         WorkshopFileID = workshopFileId;
         DisplayName = displayName;
         Authors = authors;
         WorkshopDependencies = workshopDependencies;
-        VotesUpAndDown = votesUpAndDown;
+        VotesRatio = votesRatio;
         LastUpdate = lastUpdate;
         ShortDescription = shortDescription;
         IconUri = iconUri;
