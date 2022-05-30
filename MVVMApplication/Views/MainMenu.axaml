@@ -105,7 +105,7 @@
             </ComboBox>
                 <TextBox Name="SearchTextBox" Grid.Column="1" Width="250" Height="26" HorizontalAlignment="Right"
                          Margin="0 0 10 0" VerticalAlignment="Center" SelectionBrush="{StaticResource PrimaryHighlight}" 
-                         Background="{StaticResource TextBoxColor}" KeyDown="SearchTextBox_OnKeyDown"/>
+                         Background="{StaticResource TextBoxColor}" KeyUp="SearchTextBox_OnKeyUp"/>
         </Grid>
         
         <!-- Left Panel Location -->

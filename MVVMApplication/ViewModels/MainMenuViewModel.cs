@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
@@ -27,8 +28,11 @@ namespace MVVMApplication.ViewModels
         public ObservableCollection<FilterItem> FilterItems { get; }
         public ObservableCollection<WorkshopItem> WorkshopVisibleItems { get; set; }
         public Dictionary<ulong, WorkshopItem> ItemsDictionary { get; private set; }
+        private ImmutableList<WorkshopItem> _fixedWorkshopItemsList;
+        private List<WorkshopItem> _filteredWorkshopItemsList;
         public QueryInstance QueryInstance;
         private AutoResetEvent _evtSignalling;
+        private string _prevText;
 
         public MainMenuViewModel()
         {
@@ -36,13 +40,35 @@ namespace MVVMApplication.ViewModels
             WorkshopVisibleItems = new();
             FilterItems = new();
             ItemsDictionary = new();
+            _fixedWorkshopItemsList = ImmutableList<WorkshopItem>.Empty;
+            _filteredWorkshopItemsList = new();
             _evtSignalling = new(false);
             AddFilterItems();
             AsyncFetchWorkshopItems();
         }
-        
+
         public Task AsyncFetchWorkshopItems() => Task.Run(() => QueryInstance.QueryAllPages());
 
+            public void FilterItemsByName(string text)
+        {
+            if (text == _prevText) return;
+
+            List<WorkshopItem> filteredList = new();
+            WorkshopVisibleItems.Clear();
+            if (!String.IsNullOrEmpty(text))
+            {
+                filteredList = _filteredWorkshopItemsList.FindAll(x => x.DisplayName.Contains(text));
+                _prevText = text;
+                WorkshopVisibleItems.AddRange(filteredList);
+            }
+            else WorkshopVisibleItems.AddRange(_filteredWorkshopItemsList);
+        }
+
+        public void ChangeFilter(int filterIndex)
+        {
+            //Perform operations to change _filteredWorkshopItemsList
+        }
+        
         private void AddItemToResultItems(WorkshopItem item)
         {
             DownloadImage(item);
@@ -52,6 +78,8 @@ namespace MVVMApplication.ViewModels
                 _evtSignalling.WaitOne();
             
             WorkshopVisibleItems.Add(item);
+            _fixedWorkshopItemsList.Add(item);
+            _filteredWorkshopItemsList.Add(item);
             ItemsDictionary.Add(item.WorkshopFileID, item);
         }
         
