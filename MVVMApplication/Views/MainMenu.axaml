@@ -143,9 +143,10 @@
         
         <!-- Right Panel Location -->
         <Grid Grid.Row="1" Grid.Column="1" Background="{StaticResource SecondaryDarker}">
-            <ListBox Name="WorkshopItemsListBox" Background="Transparent" Items="{Binding WorkshopVisibleItems}" Margin="0 2 0 0">
-                <ListBox.ItemTemplate>
-                    <DataTemplate DataType="{x:Type swWorker:WorkshopItem}">
+            <ListBox Name="WorkshopItemsListBox" Background="Transparent" Items="{Binding WorkshopVisibleItems}" 
+                     Margin="0 2 0 0" Initialized="WorkshopItemsListBox_OnInitialized">
+            <ListBox.ItemTemplate>
+                    <DataTemplate DataType="{x:Type m:FilterItem}">
                         <Grid Background="Transparent" Height="93">
                             <!-- Horizontal -->
                             <Grid.RowDefinitions>
@@ -218,7 +219,8 @@
                                         Click="DownloadButton_OnClick">
                                     <Image Width="20" Height="20" Stretch="UniformToFill" 
                                            Source="../Assets/arrow-down-solid.png"
-                                           VerticalAlignment="Center" HorizontalAlignment="Center"/>    
+                                           VerticalAlignment="Center" HorizontalAlignment="Center"
+                                           Initialized="ImageTemplate_OnInitialized"/>    
                                 </Button>
                             </DockPanel>
                         </Grid>

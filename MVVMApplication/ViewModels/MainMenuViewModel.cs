@@ -48,8 +48,9 @@ namespace MVVMApplication.ViewModels
         }
 
         public Task AsyncFetchWorkshopItems() => Task.Run(() => QueryInstance.QueryAllPages());
-
-            public void FilterItemsByName(string text)
+        
+        //TODO: https://stackoverflow.com/questions/22873541/search-on-textchanged-with-reactive-extensions
+        public void FilterItemsByName(string text)
         {
             if (text == _prevText) return;
 
@@ -72,7 +73,7 @@ namespace MVVMApplication.ViewModels
         private void AddItemToResultItems(WorkshopItem item)
         {
             DownloadImage(item);
-            
+
             //Wait for the first 3 items to be fully ready since they'll be on display
             if (WorkshopVisibleItems.Count <= 3)
                 _evtSignalling.WaitOne();
