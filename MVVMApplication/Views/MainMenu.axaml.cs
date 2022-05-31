@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -18,6 +19,8 @@ using Avalonia.LogicalTree;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
+using Avalonia.Styling;
+using Avalonia.Threading;
 using DynamicData;
 using DynamicData.Kernel;
 using MVVMApplication.ViewModels;
@@ -35,20 +38,60 @@ namespace MVVMApplication.Views
             var viewModel = DataContext as MainMenuViewModel;
         }
 
-        // private void DownloadButton_OnClick(object? sender, RoutedEventArgs e)
-        // {
-        //     var button = (sender as Button);
-        //     ulong workshopFileID = (ulong)button.Tag;
-        //     var workshopItem = ((WorkshopItem) button.Parent.Parent.Parent.DataContext);
-        // }
-        //
-        // private void VotingButton_OnClick(object? sender, RoutedEventArgs e)
-        // {
-        //     string[] tags = (sender as Button).Tag.ToString().Split(", ");
-        //     bool isVoteUp = tags[0] == "Up";
-        //     ulong workshopFileID = ulong.Parse(tags[1]);
-        // }
+        private void SubscribeButton_OnClick(object? sender, RoutedEventArgs e)
+        {
+            var button = sender as Button;
+            var image = button.Content as Image;
+            var workshopItem = ((WorkshopItem) button.Parent.Parent.Parent.DataContext);
+            workshopItem.IsSubscribed = !workshopItem.IsSubscribed;
+            
+            //TODO: Proper animation handling? Need a system for this..
+            if (workshopItem.IsSubscribed)
+                AsyncSubscribeAndDownloadMod(image, workshopItem);
+            else
+                AsyncUnsubscribeAndDeleteMod(image, workshopItem);
+        }
 
+        public async void AsyncSubscribeAndDownloadMod(Image image, WorkshopItem item)
+        {
+            // var assetsLoader = AvaloniaLocator.Current.GetService<IAssetLoader>();
+            // string uriPath = "avares://MVVMApplication/Assets/";
+            //
+            //
+            // image.Source = new Bitmap(assetsLoader.Open(new Uri(uriPath + "loading-icon.png")));
+            // image.Classes.Add("downloading");
+            //
+            // await Task.Run(() =>
+            // {
+            //     //Actually subscribe/download
+            //     var sw = Stopwatch.StartNew();
+            //     while (sw.Elapsed.Seconds < 30) ;
+            // });
+            //
+            // image.Source = new Bitmap(assetsLoader.Open(new Uri(uriPath + "check-solid.png")));
+            // image.Classes.Remove("downloading");
+            // image.Classes.Add("subscribed");
+        }
+
+        public async void AsyncUnsubscribeAndDeleteMod(Image image, WorkshopItem item)
+        {
+            // var assetsLoader = AvaloniaLocator.Current.GetService<IAssetLoader>();
+            // string uriPath = "avares://MVVMApplication/Assets/";
+            //
+            // image.Classes.Remove("subscribed");
+            // image.Classes.Add("removed");
+            // //Waiting for the animation to play..
+            // await Task.Run(() => Thread.Sleep(1000));
+            // image.Source = new Bitmap(assetsLoader.Open(new Uri(uriPath + "arrow-down-solid.png")));
+            // image.Classes.Remove("removed");
+            //
+            // //Actually unsubscribe/remove
+            // Task.Run(() =>
+            // {
+            //     
+            // });
+        }
+        
         private void SearchTextBox_OnKeyUp(object? sender, KeyEventArgs e)
         {
             var viewModel = DataContext as MainMenuViewModel;
@@ -245,6 +288,7 @@ namespace MVVMApplication.Views
                 subscribeImage.Source = new Bitmap(assetsLoader.Open(new Uri(uriPath + iconName)));
 
                 subscribeButton.Content = subscribeImage;
+                subscribeButton.Click += SubscribeButton_OnClick;
                 secondRowDockPanel.Children.Add(subscribeButton);
                 
                 DockPanel thirdRowDockPanel = new DockPanel();

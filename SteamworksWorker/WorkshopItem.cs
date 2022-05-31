@@ -7,7 +7,7 @@ public class WorkshopItem
 {
     public ulong WorkshopFileID { get; private set; }
     public string DisplayName { get; private set; }
-    public string Authors { get; set; }
+    public string Authors { get; private set; }
     public ulong[] WorkshopDependencies { get; private set; }
     public int VotesRatio { get; private set; }
     public DateTime LastUpdate { get; private set; }
@@ -17,7 +17,7 @@ public class WorkshopItem
     public string Tags { get; private set; }
     public ulong Subscriptions { get; private set; }
     public ulong Favorites { get; private set; }
-    public bool IsSubscribed { get; private set; }
+    public bool IsSubscribed { get; set; }
     public string ModLoaderVersion { get; private set; }
     public ModSide ModSide { get; private set; }
 

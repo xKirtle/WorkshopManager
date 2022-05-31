@@ -44,6 +44,59 @@
             <Setter Property="Background" Value="{StaticResource PrimaryEvenDarker}"/>
         </Style>
         
+        <Style Selector="Image.downloading">
+            <Setter Property="Source" Value="../Assets/loading-icon.png"/>
+            <Style.Animations>
+                <Animation Duration="0:0:1.5" Easing="SineEaseInOut" IterationCount="9999" >
+                    <KeyFrame Cue="0%">
+                        <Setter Property="RotateTransform.Angle" Value="0"/>
+                    </KeyFrame>
+                    <KeyFrame Cue="100%">
+                        <Setter Property="RotateTransform.Angle" Value="360"/>
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>    
+        </Style>
+        
+        <Style Selector="Image.subscribed">
+            <Setter Property="Source" Value="../Assets/check-solid.png"/>
+            <Style.Animations>
+                <Animation Duration="0:0:.5">
+                    <KeyFrame Cue="0%">
+                        <Setter Property="RotateTransform.Angle" Value="0"/>
+                    </KeyFrame>
+                    <KeyFrame Cue="40">
+                        <Setter Property="RotateTransform.Angle" Value="-30"/>
+                    </KeyFrame>
+                    <KeyFrame Cue="60">
+                        <Setter Property="RotateTransform.Angle" Value="-30"/>
+                    </KeyFrame>
+                    <KeyFrame Cue="70">
+                        <Setter Property="RotateTransform.Angle" Value="30"/>
+                    </KeyFrame>
+                    <KeyFrame Cue="100%">
+                        <Setter Property="RotateTransform.Angle" Value="0"/>
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
+        
+        <Style Selector="Image.removed">
+            <Setter Property="Source" Value="../Assets/check-solid.png"/>
+            <Style.Animations>
+                <Animation Duration="0:0:1" Easing="SineEaseIn">
+                    <KeyFrame Cue="0%">
+                        <Setter Property="RotateTransform.Angle" Value="0"/>
+                        <Setter Property="Opacity" Value="1.0"/>
+                    </KeyFrame>
+                    <KeyFrame Cue="100%">
+                        <Setter Property="RotateTransform.Angle" Value="-45"/>
+                        <Setter Property="Opacity" Value="0"/>
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>    
+        </Style>
+        
         <!-- ListBoxItems of filters -->
         <Style Selector="ListBox#FiltersListBox > ListBoxItem">
             <Setter Property="Background" Value="{StaticResource Primary}"/>
