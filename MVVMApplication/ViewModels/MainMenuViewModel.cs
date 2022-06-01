@@ -18,6 +18,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using DynamicData;
 using MVVMApplication.Models;
+using MVVMApplication.Utils;
 using ReactiveUI;
 using SteamworksWorker;
 using SteamworksWorker.Modules;
@@ -49,7 +50,7 @@ namespace MVVMApplication.ViewModels
             AsyncFetchWorkshopItems();
         }
 
-        public Task AsyncFetchWorkshopItems() => Task.Run(() => QueryInstance.QueryAllPages());
+        public Task AsyncFetchWorkshopItems() => Task.Run(() => QueryInstance.QueryNextPage());
         
         public void AsyncFilterItemsByKeyword(string text)
         {
@@ -121,6 +122,23 @@ namespace MVVMApplication.ViewModels
             };
             
             filterItems.ForEach(item => FilterItems.Add(item));
+        }
+
+        public async void AsyncSubscribeAndDownloadWorkshopItem(Action action)
+        {
+            await Task.Run(() =>
+            {
+                //Actually do stuff here
+                var sw = Stopwatch.StartNew();
+                while (sw.Elapsed.Seconds <= 3) ;
+            });
+            
+            action.Invoke();
+        }
+
+        public void AsyncUnsubscribeAndRemoveWorkshopItem(WorkshopItem item)
+        {
+            
         }
     }
 }

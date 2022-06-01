@@ -5,10 +5,14 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
+using System.Reactive.Subjects;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
+using Avalonia.Animation;
+using Avalonia.Animation.Easings;
 using Avalonia.Controls;
+using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Templates;
 using Avalonia.Data;
@@ -21,8 +25,10 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Styling;
 using Avalonia.Threading;
+using AvaloniaAccordion;
 using DynamicData;
 using DynamicData.Kernel;
+using MVVMApplication.Utils;
 using MVVMApplication.ViewModels;
 using SteamworksWorker;
 using SteamworksWorker.Modules;
@@ -31,7 +37,37 @@ namespace MVVMApplication.Views
 {
     public partial class MainMenu : Window
     {
-        public MainMenu() => InitializeComponent();
+        private Animation _downloadAnimation;
+        public MainMenu()
+        {
+            _downloadAnimation = new Animation
+            {
+                Duration = TimeSpan.FromSeconds(1.5),
+                IterationCount = new IterationCount(3),
+                Easing = new SineEaseInOut(),
+                Children =
+                {
+                    new KeyFrame
+                    {
+                        KeyTime = TimeSpan.FromSeconds(0),
+                        Setters =
+                        {
+                            new Setter(RotateTransform.AngleProperty, 0)
+                        }
+                    },
+                    new KeyFrame
+                    {
+                        KeyTime = TimeSpan.FromSeconds(1.5),
+                        Setters =
+                        {
+                            new Setter(RotateTransform.AngleProperty, 360)
+                        }
+                    }
+                }
+            };
+            
+            InitializeComponent();
+        }
 
         private void FiltersListBox_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
         {
@@ -40,58 +76,49 @@ namespace MVVMApplication.Views
 
         private void SubscribeButton_OnClick(object? sender, RoutedEventArgs e)
         {
+            var viewModel = DataContext as MainMenuViewModel;
             var button = sender as Button;
             var image = button.Content as Image;
-            var workshopItem = ((WorkshopItem) button.Parent.Parent.Parent.DataContext);
-            workshopItem.IsSubscribed = !workshopItem.IsSubscribed;
-            
-            //TODO: Proper animation handling? Need a system for this..
-            if (workshopItem.IsSubscribed)
-                AsyncSubscribeAndDownloadMod(image, workshopItem);
+            var item = ((WorkshopItem) button.Parent.Parent.Parent.DataContext);
+            item.IsSubscribed = !item.IsSubscribed;
+
+            if (item.IsSubscribed)
+            {
+                //Unsubscribe from event until it's finished (avoid spam)
+                button.Click -= SubscribeButton_OnClick;
+
+                //Set download animation
+                item.IsDownloading = true;
+                image.Classes.Add("downloading");
+                image.Source = Helpers.ImageNameToBitmap("loading-icon");
+
+                //Request download and send callback to remove animation and set it as completed
+                viewModel.AsyncSubscribeAndDownloadWorkshopItem(FinishAsyncDownload);
+            }
             else
-                AsyncUnsubscribeAndDeleteMod(image, workshopItem);
+            {
+                viewModel.AsyncUnsubscribeAndRemoveWorkshopItem(item);
+            }
+
+            async void FinishAsyncDownload()
+            {
+                item.IsDownloading = false;
+                image.Classes.Remove("downloading");
+                image.Source = Helpers.ImageNameToBitmap("check-solid");
+                
+                //Play little animation
+                image.Classes.Add("finishedDownload");
+                await Task.Run(() =>
+                {
+                    //Animation lasts .5 seconds
+                    var sw = Stopwatch.StartNew();
+                    while (sw.Elapsed.Seconds < 1) ;
+                    image.Classes.Remove("finishedDownload");
+                });
+                button.Click += SubscribeButton_OnClick;
+            }
         }
 
-        public async void AsyncSubscribeAndDownloadMod(Image image, WorkshopItem item)
-        {
-            // var assetsLoader = AvaloniaLocator.Current.GetService<IAssetLoader>();
-            // string uriPath = "avares://MVVMApplication/Assets/";
-            //
-            //
-            // image.Source = new Bitmap(assetsLoader.Open(new Uri(uriPath + "loading-icon.png")));
-            // image.Classes.Add("downloading");
-            //
-            // await Task.Run(() =>
-            // {
-            //     //Actually subscribe/download
-            //     var sw = Stopwatch.StartNew();
-            //     while (sw.Elapsed.Seconds < 30) ;
-            // });
-            //
-            // image.Source = new Bitmap(assetsLoader.Open(new Uri(uriPath + "check-solid.png")));
-            // image.Classes.Remove("downloading");
-            // image.Classes.Add("subscribed");
-        }
-
-        public async void AsyncUnsubscribeAndDeleteMod(Image image, WorkshopItem item)
-        {
-            // var assetsLoader = AvaloniaLocator.Current.GetService<IAssetLoader>();
-            // string uriPath = "avares://MVVMApplication/Assets/";
-            //
-            // image.Classes.Remove("subscribed");
-            // image.Classes.Add("removed");
-            // //Waiting for the animation to play..
-            // await Task.Run(() => Thread.Sleep(1000));
-            // image.Source = new Bitmap(assetsLoader.Open(new Uri(uriPath + "arrow-down-solid.png")));
-            // image.Classes.Remove("removed");
-            //
-            // //Actually unsubscribe/remove
-            // Task.Run(() =>
-            // {
-            //     
-            // });
-        }
-        
         private void SearchTextBox_OnKeyUp(object? sender, KeyEventArgs e)
         {
             var viewModel = DataContext as MainMenuViewModel;
@@ -101,9 +128,8 @@ namespace MVVMApplication.Views
         private void WorkshopItemsListBox_OnInitialized(object? sender, EventArgs e)
         {
             ListBox listBox = (sender as ListBox);
-            var assetsLoader = AvaloniaLocator.Current.GetService<IAssetLoader>();
-            string uriPath = "avares://MVVMApplication/Assets/";
-
+            
+            //Template runs everytime a new item comes on screen due to Data Virtualization for performance
             FuncDataTemplate<WorkshopItem> template = new FuncDataTemplate<WorkshopItem>((item, scope) =>
             {
                 Grid grid = new Grid
@@ -112,6 +138,8 @@ namespace MVVMApplication.Views
                     Background = Brushes.Transparent
                     // ShowGridLines = true
                 };
+                
+                #region Main Grid Definition
                 grid.RowDefinitions.Add(new RowDefinition(GridLength.Star));
                 grid.RowDefinitions.Add(new RowDefinition(GridLength.Star));
                 grid.RowDefinitions.Add(new RowDefinition(GridLength.Star));
@@ -119,7 +147,9 @@ namespace MVVMApplication.Views
                 grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Parse("50")));
                 grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Parse("92")));
                 grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
-
+                #endregion
+                
+                #region Ratings
                 StackPanel ratingPanel = new StackPanel()
                 {
                     VerticalAlignment = VerticalAlignment.Center,
@@ -142,7 +172,7 @@ namespace MVVMApplication.Views
                     Width = Height = 30,
                     VerticalAlignment = VerticalAlignment.Center,
                     HorizontalAlignment = HorizontalAlignment.Center,
-                    Source = new Bitmap(assetsLoader.Open(new Uri(uriPath + "votingUp.png")))
+                    Source = Helpers.ImageNameToBitmap("votingUp")
                 };
 
                 voteUpButton.Content = voteUpImage;
@@ -170,12 +200,14 @@ namespace MVVMApplication.Views
                     Width = Height = 30,
                     VerticalAlignment = VerticalAlignment.Center,
                     HorizontalAlignment = HorizontalAlignment.Center,
-                    Source = new Bitmap(assetsLoader.Open(new Uri(uriPath + "votingDown.png")))
+                    Source = Helpers.ImageNameToBitmap("votingDown")
                 };
                 
                 voteDownButton.Content = voteDownImage;
                 ratingPanel.Children.Add(voteDownButton);
-                
+                #endregion
+
+                #region Icon and Display Name
                 Image icon = new Image()
                 {
                     Width = Height = 80,
@@ -211,7 +243,9 @@ namespace MVVMApplication.Views
                 
                 Grid.SetColumn(displayNameUnderline, 2);
                 grid.Children.Add(displayNameUnderline);
-
+                #endregion
+                
+                #region Second Row Grid
                 DockPanel secondRowDockPanel = new DockPanel();
                 Grid.SetRow(secondRowDockPanel, 1);
                 Grid.SetColumn(secondRowDockPanel, 2);
@@ -283,14 +317,27 @@ namespace MVVMApplication.Views
                     VerticalAlignment = VerticalAlignment.Center,
                     HorizontalAlignment = HorizontalAlignment.Center,
                 };
-
-                string iconName = item.IsSubscribed ? "check-solid.png" : "arrow-down-solid.png";
-                subscribeImage.Source = new Bitmap(assetsLoader.Open(new Uri(uriPath + iconName)));
+                
+                //TODO: Due to virtualization, animations break because the ListBoxItem simply is removed..
+                //Either keep track of the animation states or.. don't animate at all?
+                //Item could be mid download..
+                if (item.IsDownloading)
+                {
+                    subscribeImage.Source = Helpers.ImageNameToBitmap("loading-icon");
+                    subscribeImage.Classes.Add("downloading");
+                }
+                else
+                {
+                    string iconName = item.IsSubscribed ? "check-solid" : "arrow-down-solid";
+                    subscribeImage.Source = Helpers.ImageNameToBitmap(iconName);   
+                }
 
                 subscribeButton.Content = subscribeImage;
                 subscribeButton.Click += SubscribeButton_OnClick;
                 secondRowDockPanel.Children.Add(subscribeButton);
+                #endregion
                 
+                #region Third Row Grid
                 DockPanel thirdRowDockPanel = new DockPanel();
                 thirdRowDockPanel.Margin = new Thickness(0, -8, 0, 0);
                 Grid.SetRow(thirdRowDockPanel, 2);
@@ -302,7 +349,7 @@ namespace MVVMApplication.Views
                     Width = Height = 20,
                     VerticalAlignment = VerticalAlignment.Center,
                     HorizontalAlignment = HorizontalAlignment.Left,
-                    Source = new Bitmap(assetsLoader.Open(new Uri(uriPath + "user-solid.png"))),
+                    Source = Helpers.ImageNameToBitmap("user-solid"),
                     Margin = new Thickness(5, 0, 0, 0)
                 };
                 
@@ -323,7 +370,7 @@ namespace MVVMApplication.Views
                     Width = Height = 20,
                     VerticalAlignment = VerticalAlignment.Center,
                     HorizontalAlignment = HorizontalAlignment.Left,
-                    Source = new Bitmap(assetsLoader.Open(new Uri(uriPath + "star-solid.png"))),
+                    Source = Helpers.ImageNameToBitmap("star-solid"),
                     Margin = new Thickness(10, 0, 0, 0)
                 };
                 
@@ -338,11 +385,17 @@ namespace MVVMApplication.Views
                 };
                 
                 thirdRowDockPanel.Children.Add(favText);
-
+                #endregion
+                
                 return grid;
             });
-
-            listBox.ItemTemplate = template;
+            
+            //TODO: Implement my own ScrollViewer to set an amount for each scroll..
+            //https://stackoverflow.com/questions/1639505/wpf-scrollviewer-scroll-amount
+            //https://stackoverflow.com/a/42621035
+            listBox.ItemContainerGenerator.ItemTemplate = template;
+            listBox.VirtualizationMode = ItemVirtualizationMode.Simple;
+            // listBox.ItemTemplate = template;
         }
     }
 }

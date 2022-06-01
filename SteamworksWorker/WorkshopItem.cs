@@ -20,6 +20,7 @@ public class WorkshopItem
     public bool IsSubscribed { get; set; }
     public string ModLoaderVersion { get; private set; }
     public ModSide ModSide { get; private set; }
+    public bool IsDownloading { get; set; }
 
     public WorkshopItem(ulong workshopFileId, string displayName, string authors, ulong[] workshopDependencies, 
         int votesRatio, DateTime lastUpdate, string shortDescription, string iconUri, string tags, 
