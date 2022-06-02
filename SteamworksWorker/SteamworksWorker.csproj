@@ -13,6 +13,7 @@
     <ItemGroup>
         <None Include="SteamworksLibs/**/*" CopyToOutputDirectory="PreserveNewest" />
         <None Include="deployLibs.sh" CopyToOutputDirectory="PreserveNewest" />
+        <None Include="deployLibs.bat" CopyToOutputDirectory="PreserveNewest" />
         <None Include="steam_appid.txt" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
 

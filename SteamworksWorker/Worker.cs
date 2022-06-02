@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using Steamworks;
+﻿using Steamworks;
 using SteamworksWorker.Modules;
 
 namespace SteamworksWorker;
@@ -10,14 +9,6 @@ public static class Worker
 
     public static void InitializeSteamworks()
     {
-        //Deploy Libs
-        ProcessStartInfo processInfo = new()
-        {
-            UseShellExecute = true,
-            FileName = "bash",
-            Arguments = "deployLibs.sh"
-        };  
-        Process.Start(processInfo).WaitForExit();
         AppDomain.CurrentDomain.ProcessExit += (sender, eventArgs) => Exit();
         
         try

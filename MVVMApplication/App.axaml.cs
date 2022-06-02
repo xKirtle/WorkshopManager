@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
@@ -16,8 +17,30 @@ namespace MVVMApplication
         {
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
+                //Deploy Libs
+                if (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS())
+                {
+                    ProcessStartInfo processInfo = new()
+                    {
+                        UseShellExecute = true,
+                        FileName = "bash",
+                        Arguments = "deployLibs.sh"
+                    };  
+                    Process.Start(processInfo).WaitForExit();
+                }
+                else if (OperatingSystem.IsWindows())
+                {
+                    ProcessStartInfo processInfo = new()
+                    {
+                        UseShellExecute = true,
+                        FileName = "cmd.exe",
+                        Arguments = "/c deployLibs.bat"
+                    };
+                    Process.Start(processInfo).WaitForExit();
+                }
+                
                 Worker.InitializeSteamworks();
-
+                
                 Views.MainMenu mainMenu = new();
                 MainMenuViewModel mainMenuViewModel = new();
                 mainMenu.DataContext = mainMenuViewModel;

@@ -8,8 +8,6 @@ rm -f Steamworks.NET
 path="SteamworksLibs/"
 if [[ $OSTYPE == "linux-gnu" ]]; then
     path+="linux64"
-elif [[ $OSTYPE == "win32" ]]; then
-    path+="win64"
 #In the future?
 #elif [[ $OSTYPE == "darwin" ]]; then 
 #    path+="osx"
